@@ -48,10 +48,10 @@ You can include a simple diagram or bullet list if helpful.
 pip install -r requirements.txt
 ```
 
-3. Run the command line interface:
+3. Run the app:
 
 ```bash
-python -m src.cli
+python -m src.main
 ```
 
 ### Running Tests
