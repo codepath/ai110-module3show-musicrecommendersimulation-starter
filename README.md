@@ -11,24 +11,19 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+Recommendation engines, such as Spotify and YouTube, are tasked with predicting what users will choose on their platform to keep them engaged and retained. From what I've seen, these recommendation engines achieve their goals through Collaborative Filtering (learning from the preferences of similar users) and Content-Based Filtering (matching item features to user tastes). In my version, I will prioritize content-based filtering, which means matching songs to users based on features such as genre, mood, energy, and tempo.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Each `Song` in my system is described by features such as genre, mood, energy, tempo (bpm), valence, danceability, and acousticness. These features capture both the style and the "vibe" of the music.
 
-Some prompts to answer:
+The `UserProfile` stores the user's preferred values for these features. For instance, their favorite genre, desired mood, and ideal levels for energy, tempo, and other attributes. This profile represents what the user is most likely to enjoy.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+The `Recommender` computes a score for each song by comparing the song's features to the user's preferences. For numerical features (like energy or tempo), it rewards songs that are closer to the user's preferred value. For categorical features (like genre or mood), it gives a higher score to exact matches. All feature scores are combined—often as a weighted sum—to produce an overall match score for each song.
 
-You can include a simple diagram or bullet list if helpful.
-
+To choose which songs to recommend, the system ranks all songs by their match scores and selects the top results. This ensures that the recommendations are the songs most closely aligned with the user's unique taste profile.
 ---
 
 ## Getting Started
