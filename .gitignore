@@ -13,3 +13,6 @@ venv/
 
 # Pytest cache
 .pytest_cache/
+
+# Local guides
+GIT_RESOLUTION_GUIDE.md
