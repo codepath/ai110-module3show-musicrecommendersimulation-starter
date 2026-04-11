@@ -16,18 +16,35 @@ Replace this paragraph with your own summary of what your version does.
 ---
 
 ## How The System Works
-
-Explain your design in plain language.
+Real-world recommendation systems usually mix many signals, like your listening history, behavior patterns, and what similar users liked, then rank choices by predicted fit. My version keeps that idea simple by prioritizing strong taste matches first, especially genre and mood, then adjusting with energy and acoustic preference so the recommendations still feel personal but easy to explain.
 
 Some prompts to answer:
 
 - What features does each `Song` use in your system
   - For example: genre, mood, energy, tempo
+  - Answer: id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, acousticness
 - What information does your `UserProfile` store
+  - Answer: favorite_genre, favorite_mood, target_energy, likes_acoustic
 - How does your `Recommender` compute a score for each song
+  - Answer: Score each song using weighted rules: genre match +2.0, mood match +1.0, energy similarity up to +2.0, acoustic preference +1.0. Total max score is 6.0.
 - How do you choose which songs to recommend
+  - Answer: Sort all songs by their score descending and select the top k (default k=5).
+- Expected biases: This system over-prioritizes genre; energy-focused users may miss great low-energy recommendations; acoustic preference might eliminate too many candidates; new genres never seen before will never be recommended.
 
 You can include a simple diagram or bullet list if helpful.
+
+**Algorithm Recipe (Finalized):**
+- Genre match: +2.0 points
+- Mood match: +1.0 point
+- Energy similarity: +2.0 × (1 - |song.energy - user.target_energy|), clamped to [0, 2.0]
+- Acoustic preference: +1.0 if alignment matches user preference
+- Sort by total score descending, return top k
+
+**Expected Biases:**
+- This system over-prioritizes genre: a song matching favorite_genre will score well even if mood is mismatched
+- Energy-focused users may miss great low-energy recommendations if their target_energy is high
+- If the dataset is limited (only 10 songs), acoustic preference might eliminate too many candidates
+- New or experimental genres not in the starter songs will never be recommended
 
 ---
 
@@ -53,6 +70,12 @@ pip install -r requirements.txt
 ```bash
 python -m src.main
 ```
+
+### Terminal Output Screenshot
+
+The screenshot below shows the CLI recommendation output including titles, scores, and reasons.
+
+![Recommendation CLI Output](assets/screenshots/recommendations-output.png)
 
 ### Running Tests
 
