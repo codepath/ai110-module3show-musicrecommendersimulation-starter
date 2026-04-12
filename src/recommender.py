@@ -70,6 +70,41 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
     Functional implementation of the recommendation logic.
     Required by src/main.py
     """
-    # TODO: Implement scoring and ranking logic
-    # Expected return format: (song_dict, score, explanation)
-    return []
+    # Scoring recipe:
+    # +2 points for genre match
+    # +1.5 points for mood match
+    # For each numerical feature (energy, tempo_bpm, valence, danceability, acousticness):
+    #   Add up to 1 point, linearly decreasing as distance increases (1 - abs(user - song))
+    def score_song(user_prefs, song):
+        """Calculate a match score and explanation for a song given user preferences."""
+        score = 0.0
+        explanation = []
+        # Genre match
+        if song['genre'] == user_prefs.get('genre'):
+            score += 2.0
+            explanation.append('Genre match (+2)')
+        # Mood match
+        if song['mood'] == user_prefs.get('mood'):
+            score += 1.5
+            explanation.append('Mood match (+1.5)')
+        # Numerical features
+        for feature in ['energy', 'valence', 'danceability', 'acousticness']:
+            if feature in user_prefs:
+                diff = abs(song[feature] - user_prefs[feature])
+                feature_score = 1.0 - diff  # max 1, min 0
+                feature_score = max(0.0, feature_score)
+                score += feature_score
+                explanation.append(f"{feature} similarity (+{feature_score:.2f})")
+        # Tempo (bpm) - scale difference to [0,1] using 200 bpm as max reasonable range
+        if 'tempo_bpm' in user_prefs:
+            diff = abs(song['tempo_bpm'] - user_prefs['tempo_bpm']) / 200.0
+            feature_score = 1.0 - diff
+            feature_score = max(0.0, feature_score)
+            score += feature_score
+            explanation.append(f"tempo_bpm similarity (+{feature_score:.2f})")
+        return score, "; ".join(explanation)
+
+    # Pythonic: list comprehension and sorted()
+    results = [(song, *score_song(user_prefs, song)) for song in songs]
+    top_k = sorted(results, key=lambda x: x[1], reverse=True)[:k]
+    return top_k

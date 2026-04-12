@@ -1,3 +1,5 @@
+# ![Music Recommender Banner](CodePathAI101-Music_Rec-01.png)
+
 # 🎵 Music Recommender Simulation
 
 ## Project Summary
@@ -24,6 +26,10 @@ The `UserProfile` stores the user's preferred values for these features. For ins
 The `Recommender` computes a score for each song by comparing the song's features to the user's preferences. For numerical features (like energy or tempo), it rewards songs that are closer to the user's preferred value. For categorical features (like genre or mood), it gives a higher score to exact matches. All feature scores are combined—often as a weighted sum—to produce an overall match score for each song.
 
 To choose which songs to recommend, the system ranks all songs by their match scores and selects the top results. This ensures that the recommendations are the songs most closely aligned with the user's unique taste profile.
+
+flowchart TD
+    A[Input: User Preferences] --> B[Process: For each song in CSV<br>Apply scoring logic]
+    B --> C[Output: Top K Recommendations]
 ---
 
 ## Getting Started
