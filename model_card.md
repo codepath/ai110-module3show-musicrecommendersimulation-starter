@@ -2,110 +2,52 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeFinder 1.0**
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
-
-Prompts:  
-
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+This recommender is designed to suggest songs that best match a user's musical preferences, such as genre, mood, and audio features like energy and danceability. It is intended for classroom exploration and learning about recommender systems, not for real-world deployment. The system assumes users can describe their preferences numerically and by category. It generates top-k song recommendations for each user profile, helping students understand how different features and weights affect results.
 
 ---
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
-
-Prompts:  
-
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
-
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+The model uses a scoring system that compares each song's features to a user's stated preferences. It considers genre, mood, energy, tempo, valence, danceability, and acousticness. Each feature contributes to a total score: genre and mood matches add fixed points, while numerical features add points based on how close the song is to the user's target. Recently, the energy feature was given double weight, and genre weight was halved, to test the system's sensitivity. The top-scoring songs are recommended to the user.
 
 ---
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
-
-Prompts:  
-
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+The dataset contains 20 songs, each with attributes for genre, mood, and several audio features. Genres include pop, lofi, rock, ambient, jazz, synthwave, indie pop, world, chip tune, blues, folk, trap, disco, classical, latin, drum and bass, and metal. Moods range from happy and chill to intense, relaxed, and reflective. No data was added or removed from the starter set. Some genres and moods are underrepresented, and the catalog does not cover all possible musical tastes or subgenres.
 
 ---
 
 ## 5. Strengths  
 
-Where does your system seem to work well  
-
-Prompts:  
-
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+The system works well for users with clear, mainstream preferences, such as those who like high-energy pop or chill lofi. It captures patterns like matching genre and mood, and rewards songs that closely fit a user's desired energy or danceability. In many cases, the top recommendations align with musical intuition, especially when the user's preferences are well-represented in the dataset. The scoring system is transparent and easy to adjust for experimentation.
 
 ---
 
 ## 6. Limitations and Bias 
 
-Where the system struggles or behaves unfairly. 
-
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+One weakness observed during testing is that the system can over-prioritize songs with high energy, especially after increasing the weight for energy similarity. This sometimes causes songs with only a loose genre or mood match to appear at the top of the recommendations, reducing diversity. Additionally, the relatively small dataset means that some genres or moods are underrepresented, which can bias the results toward more common categories. The recommender's sensitivity to weight changes also highlights how a single feature can dominate the rankings if not balanced carefully. As a result, users with niche or conflicting preferences may not receive recommendations that feel accurate or personalized.
 
 ---
 
 ## 7. Evaluation  
 
-How you checked whether the recommender behaved as expected. 
-
-Prompts:  
-
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
-
-No need for numeric metrics unless you created some.
+I tested the recommender using both typical and adversarial user profiles. For each profile, I checked whether the top 5 recommendations made sense given the user's stated preferences. I looked for cases where the system was "tricked" by conflicting or extreme preferences, and compared the results to my own musical intuition. I also experimented with changing feature weights to see how the rankings shifted. This process revealed both strengths and weaknesses in the scoring logic.
 
 ---
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
-
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+Future improvements could include adding more features, such as lyrics or user listening history, to better capture complex tastes. Improving the diversity of recommendations—so the top results aren't always from the same genre or artist—would make the system more useful. More advanced explanation logic could help users understand why a song was recommended. Expanding the dataset to include more songs and genres would also reduce bias and improve accuracy.
 
 ---
 
 ## 9. Personal Reflection  
 
-A few sentences about your experience.  
-
-Prompts:  
-
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+Working on this project taught me how sensitive recommender systems are to feature selection and weighting. I was surprised by how much a single weight change could affect the top results, and how easily the system could be biased by the dataset. This experience gave me a deeper appreciation for the challenges of building fair and useful music recommendation apps, and the importance of testing with a variety of user profiles.

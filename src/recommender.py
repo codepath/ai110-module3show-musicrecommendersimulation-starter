@@ -79,11 +79,11 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
         """Calculate a match score and explanation for a song given user preferences."""
         score = 0.0
         explanation = []
-        # Genre match
+        # Genre match (halved)
         if song['genre'] == user_prefs.get('genre'):
-            score += 2.0
-            explanation.append('Genre match (+2)')
-        # Mood match
+            score += 1.0
+            explanation.append('Genre match (+1)')
+        # Mood match (unchanged)
         if song['mood'] == user_prefs.get('mood'):
             score += 1.5
             explanation.append('Mood match (+1.5)')
@@ -93,8 +93,12 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
                 diff = abs(song[feature] - user_prefs[feature])
                 feature_score = 1.0 - diff  # max 1, min 0
                 feature_score = max(0.0, feature_score)
-                score += feature_score
-                explanation.append(f"{feature} similarity (+{feature_score:.2f})")
+                if feature == 'energy':
+                    score += 2 * feature_score
+                    explanation.append(f"energy similarity (+{2*feature_score:.2f})")
+                else:
+                    score += feature_score
+                    explanation.append(f"{feature} similarity (+{feature_score:.2f})")
         # Tempo (bpm) - scale difference to [0,1] using 200 bpm as max reasonable range
         if 'tempo_bpm' in user_prefs:
             diff = abs(song['tempo_bpm'] - user_prefs['tempo_bpm']) / 200.0
