@@ -73,9 +73,11 @@ python -m src.main
 
 ### Terminal Output Screenshot
 
-The screenshot below shows the CLI recommendation output including titles, scores, and reasons.
+The screenshot below shows the CLI recommendation output including titles, scores, and reasons for all user profiles (including adversarial edge cases).
 
-![Recommendation CLI Output](assets/screenshots/recommendations-output.png)
+![Recommendation CLI Output](assets/screenshots/ScreenShot.png)
+
+![All Profiles Output](assets/screenshots/screenshot1.png)
 
 ### Running Tests
 
@@ -123,6 +125,10 @@ Write 1 to 2 paragraphs here about what you learned:
 
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
+
+My biggest learning moment was realizing that a recommender can be mathematically consistent but still feel wrong to a listener. The clearest example was the high-energy sad profile getting upbeat pop songs near the top. That happened because genre and energy matched strongly, even when the emotional mood did not. It showed me how a simple weighting decision can create recommendations that look valid by score but feel invalid to a real person.
+
+Using AI tools helped me move faster when generating edge-case profiles, testing different weight settings, and drafting explanations, but I still had to verify everything in terminal output. Some suggestions sounded reasonable in theory but behaved differently when I actually ran the profiles. What surprised me most is that even a basic weighted algorithm can still feel like a real recommender when the inputs align well. If I continue this project, I would expand the dataset, add diversity rules to avoid repetitive top results, and replace hard thresholds like acoustic >= 0.5 with smoother similarity scoring.
 
 
 ---
