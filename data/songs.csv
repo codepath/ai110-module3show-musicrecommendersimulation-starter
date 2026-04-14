@@ -9,3 +9,43 @@ id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
 9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
 10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+11,Neon Pulse,Synth Wave,electronic,energetic,0.87,138,0.72,0.85,0.08
+12,Classical Sunset,Mozart Revival,classical,peaceful,0.25,75,0.68,0.32,0.95
+13,Island Vibes,reggae collective,reggae,relaxed,0.58,95,0.74,0.68,0.72
+14,Urban Beats,MC Flow,hip-hop,energetic,0.72,110,0.61,0.79,0.15
+15,Midnight Blues,Blues Wanderer,blues,melancholic,0.42,85,0.45,0.52,0.88
+16,Dusty Roads,Country Hearts,country,nostalgic,0.64,100,0.66,0.71,0.81
+17,Forest Walk,Folk Harmony,folk,peaceful,0.35,70,0.62,0.48,0.87
+18,Metal Storm,Iron Fists,metal,intense,0.95,160,0.38,0.71,0.05
+19,Soul Rising,Soul Voices,soul,uplifting,0.68,105,0.82,0.77,0.64
+20,K-Pop Dreams,Star Pulse,K-pop,energetic,0.85,128,0.79,0.88,0.12
+21,Jazz Nights,Blue Notes,jazz,relaxed,0.38,92,0.73,0.51,0.84
+22,Soul Smooth,Soul Collective,soul,relaxed,0.46,102,0.80,0.63,0.75
+23,Deep Blues,Bluesman Jack,blues,melancholic,0.50,98,0.52,0.55,0.84
+24,Indie Dreams,Indie Hearts,indie,chill,0.48,108,0.72,0.58,0.68
+25,Lo-Fi Memories,Lost Tapes,lofi,chill,0.38,74,0.63,0.52,0.87
+26,Electric Soul,Soul Fusion,soul,energetic,0.72,118,0.84,0.74,0.42
+27,Jazz Standards,Jazz Room,jazz,relaxed,0.40,88,0.70,0.48,0.82
+28,Acoustic Breeze,Folk Wanderer,folk,peaceful,0.32,68,0.64,0.42,0.91
+29,R&B Nights,R&B Kings,R&B,relaxed,0.52,105,0.77,0.67,0.58
+30,Chill Wave,Lofi Studio,lofi,chill,0.36,76,0.61,0.54,0.85
+31,Soul in Harmony,Gospel Soul,soul,peaceful,0.43,95,0.78,0.59,0.72
+32,Jazz Improvisation,Improv Collective,jazz,focused,0.42,96,0.68,0.50,0.80
+33,Acoustic Joy,Mindful Strings,rock,chill,0.52,95,0.65,0.61,0.78
+34,Desert Dreams,Acoustic Wanderer,rock,relaxed,0.45,88,0.68,0.59,0.80
+35,Pulse Wave,Digital Echo,synthwave,energetic,0.82,135,0.71,0.81,0.12
+36,Morning Brew,Coffee Vibes,lofi,peaceful,0.28,64,0.59,0.48,0.89
+37,Rhythm Dance,Groove Masters,pop,happy,0.88,125,0.86,0.84,0.20
+38,Tender Moment,Soft Touch,indie pop,relaxed,0.35,82,0.72,0.55,0.76
+39,Rising Spirit,Gospel Choir,soul,uplifting,0.71,108,0.85,0.75,0.68
+40,Metallic Dreams,Synth Rock,rock,intense,0.88,145,0.42,0.68,0.15
+41,Cosmic Journey,Ambient Lab,ambient,focused,0.32,65,0.61,0.38,0.88
+42,Dance Night,Club Vibes,electronic,energetic,0.92,140,0.75,0.89,0.05
+43,Warm Breeze,Acoustic Guitar,folk,chill,0.42,80,0.66,0.52,0.85
+44,Melancholic Echo,Deep Mind,blues,melancholic,0.48,92,0.48,0.54,0.81
+45,Summer Groove,Beach Boys,reggae,happy,0.65,98,0.78,0.72,0.68
+46,Whisper Soft,Intimate Jazz,jazz,peaceful,0.33,85,0.69,0.45,0.86
+47,Thunder Road,Rock Legends,rock,intense,0.89,150,0.45,0.69,0.12
+48,Peaceful Garden,Nature Sounds,ambient,peaceful,0.20,55,0.64,0.35,0.94
+49,Neon Nights,Digital Vibes,synthwave,energetic,0.84,132,0.73,0.80,0.15
+50,Soft Wonder,Dreamy Indie,indie pop,chill,0.44,98,0.70,0.60,0.72
