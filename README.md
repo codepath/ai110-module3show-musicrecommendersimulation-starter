@@ -17,17 +17,32 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world recommenders like Spotify compare your listening history against
+song attributes to find the closest match to your taste. My version does the
+same thing on a small scale — it scores each song by measuring how close it
+is to the user's preferences, then ranks the results highest to lowest.
 
-Some prompts to answer:
+**Song features:** genre, mood, energy, valence, tempo_bpm, danceability, acousticness
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+**UserProfile stores:** preferred genre, preferred mood, target energy, target valence, target danceability
 
-You can include a simple diagram or bullet list if helpful.
+### Algorithm Recipe
+
+| Feature | Points | Method |
+|---|---|---|
+| Mood match | +2.0 | Exact match |
+| Genre match | +1.5 | Exact match |
+| Energy | up to +1.5 | 1.5 × (1 − abs(song − target)) |
+| Valence | up to +1.0 | 1.0 × (1 − abs(song − target)) |
+| Danceability | up to +0.5 | 0.5 × (1 − abs(song − target)) |
+
+**Max possible score: 6.5 points.** Songs are ranked highest to lowest and the top k results are returned.
+
+### Potential Biases
+
+This system might over-prioritize genre, ignoring great songs that match the
+user's mood but come from an unexpected genre. It also has no memory — every
+session starts fresh with no learning from past listens.
 
 ---
 
@@ -74,6 +89,28 @@ Use this section to document the experiments you ran. For example:
 - What happened when you added tempo or valence to the score
 - How did your system behave for different types of users
 
+Experiment 1
+![exp1](screenshots/image.png)
+
+![profile ss1](screenshots/ss1.png)
+![profile ss2](screenshots/ss2.png)
+
+
+
+- Chill Lofi and Deep Intense Rock both scored near 6.4/6.5 for their #1 result, confirming the scoring logic works when a clear match exists. - The adversarial profile (high energy + sad) ranked 3AM Thoughts #1 despite its low energy (0.33), because mood and genre bonus points (3.5 pts) outweighed the energy mismatch. This reveals that exact-match weights can override numeric proximity when the catalog is small. - No single song dominated every list, suggesting genre weight is balanced enough to avoid a hard filter bubble with this dataset.
+
+
+
+
+-### Weight shift experiment
+Doubled energy weight (1.5 → 3.0) and halved genre weight (1.5 → 0.75).
+
+Result: Rankings shifted — songs with closer energy scores climbed even when
+they had no genre match, while exact genre matches dropped if their energy
+was off. This confirmed that genre weight was acting as a strong tiebreaker
+in the original version. Reverted to original weights for the final version
+since the original results felt more musically intuitive.
+
 ---
 
 ## Limitations and Risks
@@ -88,6 +125,24 @@ Examples:
 
 You will go deeper on this in your model card.
 
+
+The system has a strong mood/genre lock-in problem — because mood and genre
+matches award fixed bonus points (2.0 and 1.5), a song that perfectly matches
+both will almost always rank #1 regardless of how far off its numeric features
+are. This was revealed by the adversarial profile, where a quiet low-energy
+folk song ranked #1 for a user who wanted high-energy music, simply because
+the mood and genre labels matched.
+
+The dataset is also too small and unevenly distributed to avoid filter bubbles.
+Lofi has 3 songs, pop has 2, and most other genres have only 1 — so a lofi user
+will always see the same 2-3 songs at the top with very little variety. In a
+real system this would push users into an increasingly narrow listening tunnel.
+
+Finally, the system treats all users identically — there is no concept of
+context. A user who wants chill music at midnight and high-energy music at the
+gym is represented by a single static profile, which means half their actual
+taste is always ignored.
+
 ---
 
 ## Reflection
@@ -101,6 +156,23 @@ Write 1 to 2 paragraphs here about what you learned:
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
 
+
+## Reflection
+
+The biggest learning moment was the adversarial profile experiment — a quiet
+folk song ranked #1 for a user who wanted high-energy music because mood and
+genre bonus points overrode everything else. That made weighted scoring click
+for me: the weights are decisions about what matters, not just numbers.
+
+AI tools helped with boilerplate but I had to double-check the logic. At one
+point the wrong dictionary keys would have silently scored every song zero
+without throwing an error — AI code can look right and still be subtly wrong.
+
+What surprised me is how simple math can still feel like a real recommendation.
+When the right lofi songs surfaced for the right profile, it felt intelligent
+even though it was just addition on five numbers. That gap made me more
+skeptical of trusting real apps without understanding what they actually
+optimize for.
 
 ---
 
@@ -121,35 +193,31 @@ Give your recommender a name, for example:
 
 ## 2. Intended Use
 
-- What is this system trying to do
-- Who is it for
-
-Example:
-
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
+This model suggests 3 to 5 songs from a small catalog based on a user's
+preferred genre, mood, and energy level. It is for classroom exploration
+only, not for real users.
 
 ---
 
 ## 3. How It Works (Short Explanation)
 
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
+Each song is given a score based on how well it matches the user's taste
+profile. Mood and genre matches give bonus points. Energy, valence, and
+danceability are scored by proximity — the closer the song's value is to
+the user's target, the higher it scores. Songs are then ranked and the
+top results are returned.
 
 ---
 
 ## 4. Data
 
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
+- 20 songs total (10 starter + 10 added)
+- Genres represented: pop, lofi, rock, ambient, jazz, synthwave, indie pop,
+  r&b, hip-hop, classical, metal, indie folk, latin, electronic, country,
+  soul, chillwave
+- Moods represented: happy, chill, intense, relaxed, focused, moody,
+  romantic, confident, peaceful, angry, sad, euphoric, nostalgic,
+  melancholy, dreamy
 
 ---
 
