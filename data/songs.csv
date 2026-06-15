@@ -1,11 +1,11 @@
-id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
-1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18
-2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71
-3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10
-4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86
-5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05
-6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92
-7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89
-8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
-9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
-10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness,popularity,release_year,mood_tags,instrumentalness,liveness,speechiness
+1,Sunrise City,Neon Echo,pop,happy,0.82,118,0.84,0.79,0.18,88,2019,euphoric|bright|anthemic,0.04,0.15,0.06
+2,Midnight Coding,LoRoom,lofi,chill,0.42,78,0.56,0.62,0.71,72,2021,focused|calm|nostalgic,0.63,0.09,0.03
+3,Storm Runner,Voltline,rock,intense,0.91,152,0.48,0.66,0.10,84,2016,aggressive|driving|dark,0.02,0.21,0.05
+4,Library Rain,Paper Lanterns,lofi,chill,0.35,72,0.60,0.58,0.86,66,2018,cozy|nostalgic|rainy,0.59,0.07,0.04
+5,Gym Hero,Max Pulse,pop,intense,0.93,132,0.77,0.88,0.05,91,2023,euphoric|aggressive|party,0.01,0.24,0.08
+6,Spacewalk Thoughts,Orbit Bloom,ambient,chill,0.28,60,0.65,0.41,0.92,59,2011,ethereal|calm|spacious,0.81,0.05,0.02
+7,Coffee Shop Stories,Slow Stereo,jazz,relaxed,0.37,90,0.71,0.54,0.89,63,2007,warm|nostalgic|intimate,0.42,0.18,0.07
+8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22,79,1988,nostalgic|dark|cinematic,0.06,0.11,0.05
+9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78,68,2014,focused|minimal|calm,0.71,0.06,0.03
+10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35,83,2017,uplifting|bright|youthful,0.05,0.17,0.06
