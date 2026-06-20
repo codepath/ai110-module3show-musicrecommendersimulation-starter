@@ -1,0 +1,104 @@
+Phase 1: Understanding the problem 
+
+The main data types involved in these systems, eg skips, playlists, tempo, or mood 
+
+How streaming platforms recommend music: 
+1. Collaborative Filtering
+    Uses *other users behavior* to make predictions - "people who liked what liked also liked X"
+
+    * Builds matrix of users x songs with interaction signals (play, skips, saves)
+    * Find users w/ similar taste profiles, then surfaces what those users enjoyed. 
+    * strength: Discovers songs you'd nver find on your own
+    # weakness: Cold start problem - new users/songs have no history
+
+2. Content Based Filtering 
+    Uses *song attributes* to fing musically similar tracks - "this song sounds like what you've been playing"
+
+    * Each song is represented as a vector of features (tempo, key, energy, genre, mood)
+    * Compares feature similarity between songs a user liked and candidate songs
+    * strength: Works immediately for new songs; explainable ("because you like upbeat pop")
+    * weakness: Can get stuch in a "filter bubble" - only recommedns more of the same
+
+How spotify/ youtube does is: Both use a hybrid approach - combining collaborative + content signals, plus: session context(what one is doing right now), temporal pattern(time of day, day of week listening habbits), implicit vs explicit feedback(skip = dislike, replay = strong like, save = explicit like etc)
+
+Main Data Types Involved:
+Data Type      |	Examples                                                    | Signal Type
+____________________________________________________________________________________________________
+User behavior  | plays, skips, replays, saves, playlist adds                    | Implicit/Explicit
+Audio features | tempo (BPM), energy, danceability, valence (mood), loudness	| Content
+Metadata	   | genre, artist, release year, key	                            | Content
+Social signals | shares, follows, concert attendance	                        | Collaborative
+Context        | time of day, device, location	                                | Contextual
+
+---
+
+Phase 2 Step 3: Scoring Logic Design
+
+Algorithm recipe — normalized weighted sum (scores stay in [0.0, 1.0]):
+    genre match:      weight 0.40  — exact match = 1.0, no match = 0.0
+    mood match:       weight 0.35  — exact match = 1.0, no match = 0.0
+    energy closeness: weight 0.25  — 1.0 - abs(song_energy - user_energy)
+
+    final score = (0.40 * genre_score) + (0.35 * mood_score) + (0.25 * energy_score)
+
+Design decision: using normalized weights (sum to 1.0) instead of raw points (+2.0, +1.0, etc.)
+so that scores are always comparable across songs and easy to interpret.
+
+---
+
+TODO - Phase 3 Experiments:
+Test multiple user profiles in src/main.py and compare results. Example profiles to try:
+
+    user_prefs_intense_rock   = { "genre": "rock", "mood": "intense", "energy": 0.9, "acousticness": 0.1 }
+    user_prefs_happy_pop      = { "genre": "pop", "mood": "happy", "energy": 0.8, "acousticness": 0.2 }
+    user_prefs_romantic_rnb   = { "genre": "r&b", "mood": "romantic", "energy": 0.6, "acousticness": 0.44 }
+
+Swap which one is passed into recommend_songs() to see how results change.
+
+---
+
+To view the list of songs in our data
+    `python -c "from src.recommender import load_songs; songs = load_songs('data/songs.csv'); [print(s['id'], s['title']) for s in songs]"`
+
+---
+
+.sort() vs sorted() — recommend_songs ranking decision
+
+    .sort() — in place, O(1) extra space, same list is modified:
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return scored[:k]
+
+    sorted() — returns a new list, O(n) extra space:
+        return sorted(scored, key=lambda x: x[1], reverse=True)[:k]
+
+    Same time complexity: O(n log n) for both.
+    .sort() wins on space (no extra list created).
+    We chose sorted() anyway because:
+        - scored is a small local variable — the extra memory is negligible
+        - one line instead of two — more readable and Pythonic
+        - does not mutate the original list, which is safer by habit
+
+---
+
+Phase 4 Step 3: Weight Shift Experiment
+
+Tested shifting weights to double energy and halve genre:
+    original:   genre 0.40 | mood 0.35 | energy 0.25
+    experiment: genre 0.20 | mood 0.30 | energy 0.50  (still sums to 1.0)
+
+What improved:
+    - Alex: Rooftop Lights (mood match) jumped above Gym Hero (genre only) — more intuitive
+    - Sam: better variety, mood-matching songs ranked higher
+    - Riley (no genre match): Golden Hour appeared at #3 due to strong energy closeness
+
+What got worse:
+    - Jordan (conflicting: high-energy + sad): gap between correct #1 and wrong #2/#3 got smaller
+      — doubling energy made the wrong songs more competitive, not less
+
+Conclusion: original weights (0.40/0.35/0.25) are better balanced overall.
+Genre as the dominant signal makes more musical sense — genre is the strongest indicator
+of whether a song "fits" a listener. Reverting back to original weights.
+
+Terminal output from experiment (experimental weights 0.20/0.30/0.50):
+
+    See: images/weight_shift_experiment.png

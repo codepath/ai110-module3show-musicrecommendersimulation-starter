@@ -9,3 +9,11 @@ id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
 8,Night Drive Loop,Neon Echo,synthwave,moody,0.75,110,0.49,0.73,0.22
 9,Focus Flow,LoRoom,lofi,focused,0.40,80,0.59,0.60,0.78
 10,Rooftop Lights,Indigo Parade,indie pop,happy,0.76,124,0.81,0.82,0.35
+11,Golden Hour,Velvet Jones,r&b,romantic,0.61,95,0.78,0.72,0.44
+12,Moonlight Sonata Remix,Classix,classical,relaxed,0.22,66,0.74,0.30,0.97
+13,Rainy Window,June Hollow,folk,sad,0.31,75,0.35,0.44,0.91
+14,Late Night Overthinking,Drift Signal,indie pop,moody,0.53,100,0.38,0.61,0.47
+15,Pressure Drop,Bassline Cult,r&b,intense,0.80,112,0.60,0.83,0.09
+16,Cough Syrup,Young the Giant,indie rock,sad,0.55,120,0.30,0.52,0.38
+17,Hawaiian Blacksand,The Black Skirts,indie pop,romantic,0.43,88,0.62,0.51,0.67
+18,I Love You So,The Walters,indie pop,romantic,0.32,95,0.72,0.48,0.83
