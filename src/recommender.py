@@ -29,6 +29,14 @@ class UserProfile:
     target_energy: float
     likes_acoustic: bool
 
+# Sample user taste profile for Phase 2 (used for manual testing and examples).
+SAMPLE_USER_PROFILE = UserProfile(
+    favorite_genre="synthwave",
+    favorite_mood="energetic",
+    target_energy=0.75,
+    likes_acoustic=False,
+)
+
 class Recommender:
     """
     OOP implementation of the recommendation logic.
