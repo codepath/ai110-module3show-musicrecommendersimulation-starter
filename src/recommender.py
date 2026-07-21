@@ -69,7 +69,7 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     reasons: List[str] = []
 
     if user_prefs.get("genre") == song["genre"]:
-        score += 3
+        score += 1.5  # EXPERIMENT: halved from 3
         reasons.append(f"matches favorite genre '{song['genre']}'")
 
     if user_prefs.get("mood") == song["mood"]:
@@ -78,7 +78,10 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
     target_energy = user_prefs.get("energy")
     if target_energy is not None:
-        energy_points = 2 * (1 - abs(song["energy"] - target_energy))
+        # EXPERIMENT: doubled from factor 2 -> 4. abs diff is bounded to [0, 1]
+        # since both song["energy"] and target_energy are 0-1 scale, so this
+        # stays bounded to [0, 4] -- math remains valid, just a bigger max weight.
+        energy_points = 4 * (1 - abs(song["energy"] - target_energy))
         score += energy_points
         reasons.append(
             f"energy {song['energy']:.2f} close to target {target_energy:.2f}"

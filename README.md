@@ -128,6 +128,108 @@ Top 5 Recommendations
 
 ---
 
+## Edge Case Profiles
+
+Adversarial/edge-case user profiles designed to stress-test the scoring logic — conflicting preferences, unknown values, and missing data — to see whether the additive scoring rule breaks or produces misleading results.
+
+**1. Conflicting energy/mood** — `{"genre": "rock", "mood": "moody", "energy": 0.95, "likes_acoustic": False}`
+
+```
+1. Storm Runner  (Score: 5.92)
+   Because: matches favorite genre 'rock', energy 0.91 close to target 0.95, produced sound matches your preference
+2. Night Drive Loop  (Score: 4.60)
+   Because: matches favorite mood 'moody', energy 0.75 close to target 0.95, produced sound matches your preference
+3. Gym Hero  (Score: 2.96)
+   Because: energy 0.93 close to target 0.95, produced sound matches your preference
+4. Iron Fury  (Score: 2.96)
+   Because: energy 0.97 close to target 0.95, produced sound matches your preference
+5. Block Party Anthem  (Score: 2.84)
+   Because: energy 0.87 close to target 0.95, produced sound matches your preference
+```
+No song in the catalog is simultaneously "moody" and 0.95 energy, so the top result satisfies genre + energy but not mood — the system has no way to flag that the request itself is contradictory.
+
+**2. Nonexistent genre** — `{"genre": "dubstep", "mood": "chill", "energy": 0.4, "likes_acoustic": True}`
+
+```
+1. Midnight Coding  (Score: 4.96)
+   Because: matches favorite mood 'chill', energy 0.42 close to target 0.40, acoustic sound matches your preference
+2. Library Rain  (Score: 4.90)
+   Because: matches favorite mood 'chill', energy 0.35 close to target 0.40, acoustic sound matches your preference
+3. Spacewalk Thoughts  (Score: 4.76)
+   Because: matches favorite mood 'chill', energy 0.28 close to target 0.40, acoustic sound matches your preference
+4. Focus Flow  (Score: 3.00)
+   Because: energy 0.40 close to target 0.40, acoustic sound matches your preference
+5. Coffee Shop Stories  (Score: 2.94)
+   Because: energy 0.37 close to target 0.40, acoustic sound matches your preference
+```
+Genre match never fires (max possible score drops from 8 to 5), but the system degrades gracefully — it just ranks on mood/energy/acousticness instead of erroring out.
+
+**3. Contradictory acousticness** — `{"genre": "metal", "mood": "angry", "energy": 0.97, "likes_acoustic": True}`
+
+```
+1. Iron Fury  (Score: 7.00)
+   Because: matches favorite genre 'metal', matches favorite mood 'angry', energy 0.97 close to target 0.97
+2. Gym Hero  (Score: 1.92)
+   Because: energy 0.93 close to target 0.97
+3. Midnight Coding  (Score: 1.90)
+   Because: energy 0.42 close to target 0.97, acoustic sound matches your preference
+4. Storm Runner  (Score: 1.88)
+   Because: energy 0.91 close to target 0.97
+5. Focus Flow  (Score: 1.86)
+   Because: energy 0.40 close to target 0.97, acoustic sound matches your preference
+```
+The top result (Iron Fury) wins on genre + mood + energy alone and never earns the acousticness point — a structurally impossible combination (acoustic metal at 0.97 energy) is quietly ignored rather than flagged.
+
+**4. Empty/missing preferences** — `{"genre": "", "mood": "", "energy": None, "likes_acoustic": None}`
+
+```
+1. Sunrise City  (Score: 0.00)
+   Because: 
+2. Midnight Coding  (Score: 0.00)
+   Because: 
+3. Storm Runner  (Score: 0.00)
+   Because: 
+4. Library Rain  (Score: 0.00)
+   Because: 
+5. Gym Hero  (Score: 0.00)
+   Because: 
+```
+Confirms `score_song` doesn't crash on missing preferences — every rule short-circuits and all songs tie at 0.00. But this exposes a ranking weakness: with no differentiating signal, the "top 5" is really just the first 5 rows of the CSV in original order (a stable sort artifact), which could look deceptively like a real recommendation.
+
+**5. Neutral energy extreme (0.5)** — `{"genre": "jazz", "mood": "relaxed", "energy": 0.5, "likes_acoustic": None}`
+
+```
+1. Coffee Shop Stories  (Score: 6.74)
+   Because: matches favorite genre 'jazz', matches favorite mood 'relaxed', energy 0.37 close to target 0.50
+2. Velvet Whisper  (Score: 1.96)
+   Because: energy 0.48 close to target 0.50
+3. Dusty Highway  (Score: 1.90)
+   Because: energy 0.55 close to target 0.50
+4. Midnight Coding  (Score: 1.84)
+   Because: energy 0.42 close to target 0.50
+5. Focus Flow  (Score: 1.80)
+   Because: energy 0.40 close to target 0.50
+```
+Below the clear #1 match, results 2-5 are near-ties (1.80-1.96) driven entirely by energy closeness — with only one real jazz/relaxed song in the catalog, the rest of the list is filler that happens to sit near 0.5 energy, not genuine taste matches.
+
+**6. Genre-mood mismatch** — `{"genre": "ambient", "mood": "intense", "energy": 0.3, "likes_acoustic": False}`
+
+```
+1. Spacewalk Thoughts  (Score: 4.96)
+   Because: matches favorite genre 'ambient', energy 0.28 close to target 0.30
+2. Storm Runner  (Score: 3.78)
+   Because: matches favorite mood 'intense', energy 0.91 close to target 0.30, produced sound matches your preference
+3. Gym Hero  (Score: 3.74)
+   Because: matches favorite mood 'intense', energy 0.93 close to target 0.30, produced sound matches your preference
+4. Night Drive Loop  (Score: 2.10)
+   Because: energy 0.75 close to target 0.30, produced sound matches your preference
+5. Rooftop Lights  (Score: 2.08)
+   Because: energy 0.76 close to target 0.30, produced sound matches your preference
+```
+Directly confirms the genre-dominance bias noted earlier: an ambient song that completely misses the "intense" mood still outranks two genuinely intense, high-energy songs, purely because genre is weighted higher (+3) than mood (+2).
+
+---
+
 ## Experiments You Tried
 
 Use this section to document the experiments you ran. For example:
