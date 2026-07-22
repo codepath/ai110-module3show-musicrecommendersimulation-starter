@@ -29,6 +29,15 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+My design for recommendations will utilize the genre, mood, energy, and acoustic portions of the songs with each of them scored with a final integer combining the results of all the attributes. 
+
+Genre and mood are scored based on exact matches - 1.0 if the user likes the same genre or mood and 0.0 otherwise. Energy is computed with the mathematical structure utilizing the Gaussian falloff (score = exp( -(distance ** 2) / (2 * sigma ** 2) )
+). Acoustics is scored with 1.0 if the user likes the acoustic (agrees with the acoustic > 0.6), and 0.0 otherwise.  Each attribute is weighted differently and combined to make a single integer from 0-1: genre with 0.35, mood with 0.30, energy with 0.25, and acoustic with 0.10.
+
+This design falls under the content based filtering model, since it utilizes info from the songs themselves instead of user behavior.
+
+There will certainly be biases in this model. One such bias includes the weighting of each of the attributes. The user may value acoustics above all else for example, but in this scoring system it only accounts for 0.1 of the score. 
+
 ---
 
 ## Getting Started
