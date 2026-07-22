@@ -9,25 +9,41 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from recommender import load_songs, recommend_songs
+from .recommender import load_songs, recommend_songs
+
+
+def print_recommendations(recommendations) -> None:
+    """
+    Pretty-prints song recommendations to the terminal.
+    """
+    print("\n" + "=" * 55)
+    print("  TOP SONG RECOMMENDATIONS")
+    print("=" * 55)
+
+    for rank, (song, score, explanation) in enumerate(recommendations, start=1):
+        print(f"\n{rank}. {song['title']} — {song['artist']}")
+        print(f"   Score: {score:.2f}")
+        print(f"   Why:   {explanation}")
+
+    print("\n" + "=" * 55 + "\n")
 
 
 def main() -> None:
-    songs = load_songs("data/songs.csv") 
+    songs = load_songs("data/songs.csv")
 
     # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    # NOTE: keys must match what score_song() reads (favorite_genre,
+    # favorite_mood, target_energy, likes_acoustic) — not raw feature names.
+    user_prefs = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.8,
+        "likes_acoustic": False,
+    }
 
     recommendations = recommend_songs(user_prefs, songs, k=5)
 
-    print("\nTop recommendations:\n")
-    for rec in recommendations:
-        # You decide the structure of each returned item.
-        # A common pattern is: (song, score, explanation)
-        song, score, explanation = rec
-        print(f"{song['title']} - Score: {score:.2f}")
-        print(f"Because: {explanation}")
-        print()
+    print_recommendations(recommendations)
 
 
 if __name__ == "__main__":
