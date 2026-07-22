@@ -146,11 +146,18 @@ Top recommendations for genre=pop, mood=happy, energy=0.8
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+### Weight Shift: halve genre (2.0 → 1.0), double energy (1.0 → 2.0)
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+I temporarily changed the weight constants at the top of `recommender.py` (`GENRE_WEIGHT`, `ENERGY_WEIGHT`) to test how sensitive the rankings are to the genre/energy balance. The max possible score stayed the same (1.0 + 1.0 + 2.0 + 0.5 = 4.5, same as the original 2.0 + 1.0 + 1.0 + 0.5 = 4.5), so scores from this run are still on the same scale as the finalized recipe — a useful sanity check that the math was still valid before comparing results.
+
+**What stayed the same:** for profiles where one song matched both genre and mood (`Sunrise City` for High-Energy Pop, `Library Rain` for Chill Lofi, `Storm Runner` for Deep Intense Rock), that song was still #1 — a double categorical match is strong enough to win under either weighting.
+
+**What changed:**
+- The **#2 vs #3 gap shrank** in several lists. For High-Energy Pop, `Rooftop Lights` (mood match only, genre mismatch) closed from 1.11 points behind `Gym Hero` (genre match only) down to a 0.22-point gap — energy closeness now counts for much more, so a strong energy fit can nearly cancel out a genre mismatch.
+- In the **"Genre Not In Catalog"** adversarial profile, a new song (`Island Drift`, reggae, energy=0.50 — a perfect match to the 0.5 target) entered the top 5 purely on a perfect energy score, something that never happened under the original weights.
+- In the **"Conflicting Signals (Energetic + Sad)"** adversarial profile, `Rainy Window Blues` — the only `blues` song, which won #1 under the original recipe on genre match alone — fell out of the top 5 entirely. Its own energy (0.30) is very far from the profile's target (0.9), and with energy now weighted double, that mismatch outweighed the halved genre bonus.
+
+**More accurate, or just different?** Mostly just different, with one case that arguably improved: `Rainy Window Blues` topping a list despite a huge energy mismatch (under the original weights) felt like an artifact of the catalog only having one blues song, not a genuinely good recommendation — the weight shift fixed that specific case. But this comes at a cost to the system's stated design goal (see "How The System Works"): genre and mood are supposed to be prioritized as the *more stable* signal of taste precisely because numeric closeness is more moment-to-moment. Doubling energy's weight undercuts that intentional design choice. I reverted to the original weights (`GENRE_WEIGHT=2.0`, `ENERGY_WEIGHT=1.0`) as the finalized recipe, but this is a real tension worth revisiting with a larger, more evenly distributed catalog.
 
 ---
 

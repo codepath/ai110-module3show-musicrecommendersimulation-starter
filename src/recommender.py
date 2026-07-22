@@ -30,6 +30,14 @@ class UserProfile:
     target_energy: float
     likes_acoustic: bool
 
+# Algorithm Recipe weights (see README "Algorithm Recipe"). A Weight Shift
+# sensitivity experiment (genre=1.0, energy=2.0) was tested and reverted -
+# see README "Experiments You Tried" for the results.
+GENRE_WEIGHT = 2.0
+MOOD_WEIGHT = 1.0
+ENERGY_WEIGHT = 1.0
+ACOUSTIC_WEIGHT = 0.5
+
 def _score_components(
     genre: str,
     mood: str,
@@ -45,23 +53,23 @@ def _score_components(
     reasons = []
 
     if genre == favorite_genre:
-        score += 2.0
-        reasons.append(f"genre match ({genre}) (+2.0)")
+        score += GENRE_WEIGHT
+        reasons.append(f"genre match ({genre}) (+{GENRE_WEIGHT:.1f})")
 
     if mood == favorite_mood:
-        score += 1.0
-        reasons.append(f"mood match ({mood}) (+1.0)")
+        score += MOOD_WEIGHT
+        reasons.append(f"mood match ({mood}) (+{MOOD_WEIGHT:.1f})")
 
-    energy_points = 1.0 * (1 - abs(energy - target_energy))
+    energy_points = ENERGY_WEIGHT * (1 - abs(energy - target_energy))
     score += energy_points
     reasons.append(f"energy closeness (+{energy_points:.2f})")
 
     if likes_acoustic and acousticness > 0.6:
-        score += 0.5
-        reasons.append("acoustic preference match (+0.5)")
+        score += ACOUSTIC_WEIGHT
+        reasons.append(f"acoustic preference match (+{ACOUSTIC_WEIGHT:.1f})")
     elif not likes_acoustic and acousticness < 0.4:
-        score += 0.5
-        reasons.append("non-acoustic preference match (+0.5)")
+        score += ACOUSTIC_WEIGHT
+        reasons.append(f"non-acoustic preference match (+{ACOUSTIC_WEIGHT:.1f})")
 
     return score, reasons
 
