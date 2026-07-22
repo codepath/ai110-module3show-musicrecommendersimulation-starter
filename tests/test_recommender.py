@@ -1,4 +1,6 @@
-from src.recommender import Song, UserProfile, Recommender
+from src.recommender import Song, UserProfile, Recommender, score_song
+from src.main import get_sample_user_profiles
+
 
 def make_small_recommender() -> Recommender:
     songs = [
@@ -59,3 +61,39 @@ def test_explain_recommendation_returns_non_empty_string():
     explanation = rec.explain_recommendation(user, song)
     assert isinstance(explanation, str)
     assert explanation.strip() != ""
+
+
+def test_sample_user_profiles_include_three_named_preferences():
+    profiles = get_sample_user_profiles()
+
+    assert "High-Energy Pop" in profiles
+    assert "Chill Lofi" in profiles
+    assert "Deep Intense Rock" in profiles
+
+
+def test_sample_user_profiles_include_adversarial_edge_cases():
+    profiles = get_sample_user_profiles()
+
+    assert "Conflicting Mood-Energy" in profiles
+    assert "No Match Fallback" in profiles
+    assert "Acoustic Bonus Trap" in profiles
+
+
+def test_weight_shift_increases_energy_importance_and_reduces_genre_importance():
+    user_prefs = {
+        "genre": "pop",
+        "mood": "happy",
+        "energy": 0.8,
+        "likes_acoustic": False,
+    }
+    song = {
+        "genre": "pop",
+        "mood": "sad",
+        "energy": 0.8,
+        "acousticness": 0.2,
+    }
+
+    score, reasons = score_song(user_prefs, song)
+
+    assert score == 3.0
+    assert reasons == ["genre match (+1.0)", "energy closeness (+2.00)"]
