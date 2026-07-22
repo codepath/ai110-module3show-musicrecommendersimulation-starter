@@ -2,48 +2,50 @@
 
 ## 1. Model Name  
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+**VibeCheck 1.0**
+
+It checks if a song's "vibe" — genre, mood, energy, and acoustic-ness — matches what you asked for.
 
 ---
 
 ## 2. Intended Use  
 
-Describe what your recommender is designed to do and who it is for. 
+**Goal:** You tell it what you like — favorite genre, favorite mood, a target energy level, and whether you like acoustic songs. It looks through a small song catalog and hands back the top 5 songs that match best, with reasons why.
 
-Prompts:  
+**Who it's for:** This is a classroom project, not a real app. It's built so I (and my instructor) can learn how simple recommender systems work, not for real listeners to use.
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+**What it assumes:** It assumes you already know your own taste in single words (like `genre="pop"`, `mood="happy"`) and that the small catalog actually has a song that fits. It doesn't learn from what you actually listen to — it only reacts to what you say you want.
+
+**Intended use:** Learning how content-based scoring and ranking works, and testing how a simple set of rules reacts to normal, weird, or contradictory inputs.
+
+**Not intended for:** Don't use this to pick real music for real people. The catalog is tiny (18 songs), matching is just exact words, and the system has no idea what a song actually sounds like. It shouldn't be used to make any real claims about "good taste" either — it's just adding up points.
 
 ---
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+Every song gets a score, kind of like a report card. Points get added for each thing that matches:
 
-Prompts:  
+- **Genre match** — the biggest bonus. If the song's genre is exactly your favorite genre, it gets 2 points.
+- **Mood match** — a medium bonus. If the mood matches too, it gets 1 more point.
+- **Energy match** — partial credit. The closer the song's energy is to what you asked for, the more points it earns, up to 1 point. It's not just yes/no — it's "how close."
+- **Acoustic match** — a small bonus. If the song is (or isn't) acoustic in the way you said you like, it gets half a point.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+Add all of that up and that's the song's total score. Every song in the catalog gets scored the same way, then they're all sorted highest-to-lowest, and the top 5 are shown to you along with the reasons behind each score.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+I changed this from the starter code, which had no scoring logic at all — `score_song` just returned an empty list. I picked genre as the strongest signal because it's the most stable thing about someone's taste, and I made energy a sliding scale instead of a yes/no, since energy is really about "how close," not "matched or not."
 
 ---
 
 ## 4. Data  
 
-Describe the dataset the model uses.  
+The dataset is one CSV file, `data/songs.csv`, with 18 songs. Each song has a title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness.
 
-Prompts:  
+There are 15 different genres in there, but most genres only have 1 song each (lofi has 3, pop has 2). Moods are single words like "happy," "chill," "intense," or "melancholic," picked by whoever built the dataset — not calculated from the actual audio.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+I didn't add or remove any songs from the starter dataset.
+
+What's missing: no lyrics, no actual audio, no artist popularity, and no real listening history. Energy and genre are also strangely linked in this dataset — every "chill" genre has low energy and every "upbeat" genre has high energy, so there's no such thing as a mellow rock song or an energetic lofi song here. That's a real gap in the kind of musical taste this dataset can represent.
 
 ---
 
@@ -69,16 +71,9 @@ This matches my intuition: if I personally wanted a happy, high-energy pop song,
 
 ## 6. Limitations and Bias 
 
-**The genre weight can make the same song dominate every list for that genre.** `Neon Pulse Overdrive` (the catalog's only `edm` song) ranked #1 for both the "Out-of-Range Energy" and "Contradictory Acoustic Preference" adversarial profiles in Section 7 — different moods, energies, and acoustic preferences, same winner — purely because it's the sole song that can claim the **+2.0 genre bonus** for `edm`. With only 18 songs and mostly one song per genre, the +2.0 genre weight is large enough relative to the rest of the recipe (max 2.5 combined from mood/energy/acoustic) that whichever song owns a genre will usually win any profile requesting that genre, regardless of how well its mood or energy actually fits. This is both a strength (it makes genre-consistent recommendations very reliable) and a bias risk: a bigger, more varied catalog with several songs per genre would be needed before genre weighting stops effectively picking a single "default song" per genre.
+**One song can dominate its whole genre.** `Neon Pulse Overdrive` is the only `edm` song, so it wins first place for every `edm` profile no matter the mood or energy asked for. Genre is worth 2.0 points and everything else only adds up to 2.5, so genre almost always wins.
 
-**The "energy gap" calculation quietly assumes genre and energy are correlated, which creates a filter bubble for users whose taste doesn't fit that assumption.** I asked my AI coding assistant to check `recommender.py` and `data/songs.csv` together for hidden biases, and it flagged that every "chill" genre in the catalog (`lofi`, `ambient`, `jazz`, `folk`, `classical`, `blues`) has energy between 0.20-0.42, while every "upbeat" genre (`pop`, `rock`, `synthwave`, `indie pop`, `metal`, `hip-hop`, `edm`) sits between 0.75-0.97 — there is no low-energy rock song or high-energy lofi song anywhere in the data. Because of this, a user who wants, say, high-energy lofi can never score well on both `genre` and `energy` at once: no matter how the weights are tuned, the recipe will always force a tradeoff between the two for that listener, while a user whose taste happens to match the dataset's built-in genre/energy correlation gets full credit on both. This isn't a bug in the scoring formula itself, but a bias baked into the catalog that the formula has no way to detect or correct for — it silently underserves any "genre-atypical" listener (e.g., someone who likes energetic lofi or mellow rock) in favor of listeners whose preferences already match the dataset's assumptions.
-
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+**Genre and energy are linked in the data, which boxes some listeners out.** Chill genres (lofi, jazz, folk, blues) are all low energy, and upbeat genres (pop, rock, edm) are all high energy. So someone who wants high-energy lofi can never score well on both — that combo just doesn't exist in the dataset. Not a code bug, just a gap in the data, but it means some tastes can't be served well no matter how the weights are tuned.
 
 ---
 
@@ -296,14 +291,9 @@ The genre/mood match wins even though it gets zero acoustic credit, since 2.0 + 
 
 ## 8. Future Work  
 
-Ideas for how you would improve the model next.  
-
-Prompts:  
-
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+1. **Let mood understand synonyms.** Right now "sad" and "melancholic" count as a total mismatch, even though they mean almost the same thing. A small list of similar moods (or a real synonym lookup) would fix this.
+2. **Add more songs per genre.** Right now most genres have just 1 song, so that one song always wins for its genre no matter what. More variety would make the ranking actually mean something within a genre.
+3. **Validate the input.** If someone asks for `energy=1.5` (energy only really goes from 0 to 1), the system should flag that instead of silently accepting it and scoring around it.
 
 ---
 
