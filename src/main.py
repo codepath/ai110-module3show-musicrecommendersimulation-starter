@@ -17,7 +17,7 @@ def main() -> None:
     print(f"Loaded songs: {len(songs)}")
 
     # Starter example profile
-    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    user_prefs = {"genre": "pop", "mood": "happy", "energy": 0.8, "likes_acoustic": False}
 
     recommendations = recommend_songs(user_prefs, songs, k=5)
 

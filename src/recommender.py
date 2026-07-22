@@ -54,10 +54,12 @@ class Recommender:
         self.songs = songs
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
+        """Return the top ``k`` songs for the given user."""
         # TODO: Implement recommendation logic
         return self.songs[:k]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
+        """Return a human-readable reason the song was recommended."""
         # TODO: Implement explanation logic
         return "Explanation placeholder"
 
@@ -145,9 +147,26 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
 def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
     """
-    Functional implementation of the recommendation logic.
+    Ranks the whole catalog for a user and returns the top ``k`` matches.
+
+    Every song is judged by score_song, then the catalog is sorted from
+    highest to lowest score and the best ``k`` are returned.
+
+    Returns a list of (song, score, explanation) tuples, where explanation
+    is a human-readable summary built from score_song's reasons.
+
     Required by src/main.py
     """
-    # TODO: Implement scoring and ranking logic
-    # Expected return format: (song_dict, score, explanation)
-    return []
+    # 1. Score every song in one pass. Each entry becomes a (song, score,
+    #    explanation) tuple; the reasons list is joined into a readable string.
+    scored = [
+        (song, score, "; ".join(reasons) if reasons else "no strong matches")
+        for song in songs
+        for score, reasons in [score_song(user_prefs, song)]
+    ]
+
+    # 2. Sort by score, highest first.
+    scored.sort(key=lambda item: item[1], reverse=True)
+
+    # 3. Return only the top k.
+    return scored[:k]
