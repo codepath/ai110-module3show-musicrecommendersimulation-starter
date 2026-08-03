@@ -1,0 +1,76 @@
+%% MoodMatch — Music Recommender Chat: system architecture
+%% Source of truth for the diagram. Render at https://mermaid.live or with
+%% `mmdc -i diagrams/architecture.mmd -o assets/architecture.png`.
+flowchart TD
+    User([" User message in plain English<br/>request &quot;chill lofi&quot; · or question &quot;what is lofi?&quot; "]):::human
+
+    subgraph UI["Streamlit Chat UI · src/chat_app.py"]
+        ChatIn["st.chat_input"]
+        History[("st.session_state<br/>message history")]
+        Panels["&quot;What I understood&quot; + &quot;Agent steps&quot;<br/>show parsed prefs &amp; reasoning trace"]:::check
+        Out([" Assistant reply in chat "]):::human
+    end
+
+    subgraph Agent["Agentic Workflow · src/agent.py"]
+        Router["PLAN → ACT → CHECK → RESPOND<br/>routes to a tool; re-routes if the check fails"]:::agent
+    end
+
+    subgraph RecTool["Tool A · Recommender"]
+        ParseQ["parse_query()<br/>src/query_parser.py"]
+        Score["recommend_songs() + score_ceiling()<br/>src/recommender.py (source of truth)"]
+    end
+
+    subgraph KbTool["Tool B · Knowledge retriever (RAG)"]
+        Retrieve["retrieve() + answer_question()<br/>src/knowledge_base.py<br/>keyword search + grounding threshold"]
+    end
+
+    subgraph Data["Data sources"]
+        CSV[("data/songs.csv<br/>18 songs")]
+        Docs[("data/knowledge/*.md<br/>genre + how-it-works docs")]
+    end
+
+    subgraph LLM["Optional Gemini layer · off by default"]
+        Gem["rephrase_with_gemini()<br/>rephrases chosen songs ONLY<br/>fail-closed → template"]:::optional
+    end
+
+    subgraph Tests["Automated tests · pytest (68)"]
+        T1["test_query_parser.py"]:::check
+        T2["test_recommender.py"]:::check
+        T3["test_knowledge_base.py"]:::check
+        T4["test_agent.py"]:::check
+    end
+
+    %% input → agent
+    User --> ChatIn --> Router
+    History -.-> ChatIn
+
+    %% agent → tools (and re-route)
+    Router -- "taste request" --> ParseQ
+    Router -- "question" --> Retrieve
+    Router <-. "CHECK fails → re-route" .-> Router
+
+    %% tools ← data
+    CSV --> ParseQ
+    CSV --> Score
+    Docs --> Retrieve
+    ParseQ -- "user_prefs dict" --> Score
+
+    %% tools → output
+    Score -- "ranked picks + explanations" --> Router
+    Retrieve -- "grounded answer + citation" --> Router
+    Router -- "recommendation & conversational ON" --> Gem --> Out
+    Router -- "answer / hint" --> Out
+    Router --> Panels
+    Out --> History
+
+    %% human + testing checkpoints
+    Panels -. "human verifies parse &amp; routing" .-> User
+    T1 -. "verifies" .-> ParseQ
+    T2 -. "verifies" .-> Score
+    T3 -. "verifies" .-> Retrieve
+    T4 -. "verifies" .-> Router
+
+    classDef human fill:#dbeafe,stroke:#1e40af,color:#0b1f4d;
+    classDef check fill:#dcfce7,stroke:#166534,color:#052e16;
+    classDef optional fill:#fef9c3,stroke:#854d0e,color:#3f2d02,stroke-dasharray:4 3;
+    classDef agent fill:#ede9fe,stroke:#5b21b6,color:#2e1065;

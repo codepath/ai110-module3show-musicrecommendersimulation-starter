@@ -1,43 +1,70 @@
 # AI Interactions Log
 
-> **Stretch features only.** Only fill in the sections that apply to stretch features you attempted. If you did not attempt a stretch feature, leave its section blank or delete it. This file is not required for the core project.
+This file documents the **stretch features** built on top of the required chat
+interface: an **agentic workflow** and a **RAG enhancement**. The full,
+reproducible reasoning traces live in [`logs/agent_traces.md`](logs/agent_traces.md)
+(regenerate with `python scripts/generate_traces.py`).
 
 ---
 
-## Agentic Workflow (SF8)
+## Agentic Workflow — multi-step reasoning with tool-calls
 
-> Document your experience using an AI agent (e.g., Cursor Agent, Claude, Copilot) to make multi-step changes autonomously.
+**What it does.** Every chat message runs through an explicit decision chain in
+[`src/agent.py`](src/agent.py) instead of a single fixed path:
 
-**What task did you give the agent?**
+1. **PLAN** — read the message for question-vs-request cues and pre-parse taste terms; form a hypothesis about which tool to use.
+2. **ACT** — call a tool: the **knowledge retriever** (`src/knowledge_base.py`) or the **recommender** (`src/recommender.py`).
+3. **CHECK** — inspect the tool's result. If the hypothesis was wrong — a "question" that grounds nothing, or a "request" with no parseable taste — **re-route** and call the other tool (a reflection step).
+4. **RESPOND** — return the grounded answer.
 
-<!-- Describe the goal you asked the agent to accomplish -->
+The two tools are the project's own functions, so the whole loop is deterministic
+and offline. Each step is recorded and shown in the app's "Agent steps" panel.
 
-**Prompts used:**
+**Example trace — the re-route (reflection) path.** The message is *phrased* as a
+question, so the agent tries the knowledge tool first; it grounds nothing, but a
+taste term was parsed, so the agent changes plan and calls the recommender:
 
-<!-- Paste the key prompts you gave the agent -->
+```
+User: can you play something euphoric?
+Intent chosen: recommend
 
-**What did the agent generate or change?**
+1. [PLAN] question-like=True; parsed taste={'mood': 'euphoric'} → try the knowledge tool first
+2. [ACT] called knowledge retriever → grounded=False, score=0.00, top_source=None
+3. [CHECK] not grounded, but taste terms were parsed → RE-ROUTE to recommend
+4. [ACT] called recommender → 5 picks
+5. [RESPOND] returned recommendations
+```
 
-<!-- List the files edited, code generated, or commands run -->
-
-**What did you verify or fix manually?**
-
-<!-- Describe anything the agent got wrong or that required human review -->
+**How it was verified.** [`tests/test_agent.py`](tests/test_agent.py) asserts each
+routing path, including that the re-route emits a `CHECK … RE-ROUTE` step and that
+a trace is always produced. See `logs/agent_traces.md` for one trace per path.
 
 ---
 
-## Design Pattern (SF10)
+## RAG Enhancement — retrieval over a second data source
 
-> Document how AI helped you choose or implement a design pattern.
+**What it does.** The original system had one data source (the song catalog) and
+one kind of retrieval (content-based scoring → songs). The enhancement adds a
+**second data source** — fact documents in [`data/knowledge/`](data/knowledge/)
+(a genre glossary and a "how it works" FAQ) — and a **keyword retriever** in
+[`src/knowledge_base.py`](src/knowledge_base.py) that answers *questions about*
+music grounded in those docs, with citations and a relevance threshold that makes
+it say "I don't have that" instead of guessing.
 
-**Which design pattern did you use?**
+**Before → after** (message: *"what is lofi?"*):
 
-<!-- e.g., Strategy, Factory, Observer, etc. -->
+- **Before** (recommender only): the word "lofi" is parsed as a genre and the
+  system returns a *list of lofi songs* — it never answers the question.
+- **After** (agent routes to the retriever): the system returns a grounded
+  definition from `genres.md`:
 
-**How did AI help you brainstorm or implement it?**
+  ```
+  Intent chosen: knowledge
+  [ACT] called knowledge retriever → grounded=True, score=1.00, top_source=genres.md
+  Reply: **Lofi** — Lofi (short for "low-fidelity") is relaxed, downtempo music
+  built around mellow beats, soft instrumentation, and a warm, slightly hazy sound...
+  ```
 
-<!-- Describe the conversation or suggestions that led to your decision -->
-
-**How does the pattern appear in your final code?**
-
-<!-- Point to the relevant class or method -->
+**How it was verified.** [`tests/test_knowledge_base.py`](tests/test_knowledge_base.py)
+covers chunking, heading-weighted ranking, the grounding threshold (an unrelated
+question is *not* grounded), and the honest fallback answer.

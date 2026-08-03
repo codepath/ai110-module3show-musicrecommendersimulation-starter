@@ -1,3 +1,7 @@
 pandas
 pytest
 streamlit
+
+# Optional: enables the conversational (Gemini) replies in src/chat_app.py.
+# The app runs fully offline without it -- install only if you set GEMINI_API_KEY.
+# google-genai
