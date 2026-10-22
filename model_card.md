@@ -21,16 +21,18 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+The recommender works like a judge giving every song in the catalog a mark out of 1, then handing back the five highest marks.
 
-Prompts:  
+**What it looks at.** You tell it your favorite genre and mood, plus how energetic, upbeat (valence) and acoustic you want your music to be. For each song it compares those wishes against the song's own details.
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+**How a song earns points.**
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+- For the three "dial" qualities, it asks how close the song is to what you want, not how high it is. A song at 0.82 energy is nearly as good as 0.80 for someone who asked for 0.80, and a 0.15 song is not. Energy counts most (35%), then acousticness (25%), then valence (20%).
+- Mood and genre are simple yes-or-no checks. A matching mood adds 12% and a matching genre adds 8%. They are worth less because most genres appear only once in a small catalog.
+
+**What you get back.** The points are added up, the songs are sorted from best to worst, and the top five are shown with a short list of reasons, for example "mood match (+0.12)". So you can always see why a song ranked where it did.
+
+**What I changed from the starter.** The starter only loaded and returned the first few songs. I added the CSV loading, the scoring rule above and the ranking step.
 
 ---
 
