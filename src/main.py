@@ -46,6 +46,31 @@ ADVERSARIAL_PROFILES = {
 }
 
 
+# Profiles that use the advanced song features
+ADVANCED_PROFILES = {
+    "Mainstream Hits": {
+        "genre": "pop", "mood": "happy",
+        "energy": 0.85, "valence": 0.8, "acousticness": 0.15,
+        "popularity": 90, "decade": 2020, "mood_tags": ["upbeat", "bright"],
+    },
+    "Nostalgic Throwback": {
+        "genre": "country", "mood": "nostalgic",
+        "energy": 0.5, "valence": 0.65, "acousticness": 0.7,
+        "popularity": 55, "decade": 2000, "mood_tags": ["nostalgic", "warm"],
+    },
+    "Instrumental Study Session": {
+        "genre": "lofi", "mood": "focused",
+        "energy": 0.4, "valence": 0.6, "acousticness": 0.8,
+        "instrumentalness": 0.9, "mood_tags": ["study", "cozy"], "avoid_explicit": True,
+    },
+    "Clean Workout": {
+        "genre": "rock", "mood": "intense",
+        "energy": 0.95, "valence": 0.5, "acousticness": 0.05,
+        "mood_tags": ["workout", "powerful"], "avoid_explicit": True,
+    },
+}
+
+
 def print_recommendations(name: str, user_prefs: dict, songs: list, k: int = 5) -> None:
     """Print the top k recommendations for one profile in a readable layout."""
     recommendations = recommend_songs(user_prefs, songs, k=k)
@@ -73,7 +98,8 @@ def main() -> None:
     songs = load_songs("data/songs.csv")
     print(f"Loaded songs: {len(songs)}")
 
-    for name, prefs in {**STANDARD_PROFILES, **ADVERSARIAL_PROFILES}.items():
+    all_profiles = {**STANDARD_PROFILES, **ADVERSARIAL_PROFILES, **ADVANCED_PROFILES}
+    for name, prefs in all_profiles.items():
         print_recommendations(name, prefs, songs)
 
 

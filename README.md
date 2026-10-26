@@ -26,6 +26,7 @@ Real-world platforms like Spotify and YouTube combine two approaches: collaborat
 - `energy` (0–1)
 - `valence` (0–1)
 - `acousticness` (0–1)
+- `popularity`, `release_decade`, `mood_tags`, `instrumentalness` and `explicit` (advanced features, see below)
 - `tempo_bpm`, `danceability`, `title`, `artist` and `id` are loaded from the CSV. Tempo and danceability are not scored, because they largely repeat energy. The rest are for display and identification.
 
 **`UserProfile` features**
@@ -44,6 +45,20 @@ score = 0.35·sim(energy) + 0.25·sim(acousticness) + 0.20·sim(valence)
 
 sim(f) = 1 − |song_f − user_f|
 ```
+
+**Advanced song features (added later)**
+
+Five more attributes were added to `data/songs.csv` and to the scoring. Each one only counts when the user sets the matching preference, so the six original profiles score exactly as before.
+
+| Song column | User preference | Weight | How it scores |
+|---|---|---|---|
+| `popularity` (0–100) | `popularity` | 0.10 | closeness: 1 − gap/100 |
+| `release_decade` (1960–2020) | `decade` | 0.10 | closeness: 1 − gap/40 years, never below 0 |
+| `mood_tags` (e.g. `cozy\|study`) | `mood_tags` (list) | 0.15 | share of the user's tags the song has |
+| `instrumentalness` (0–1) | `instrumentalness` | 0.10 | closeness: 1 − gap |
+| `explicit` (0 or 1) | `avoid_explicit` | 0.05 | 1 for a clean song, 0 for an explicit one |
+
+The final score is divided by the weights in use, so it always stays between 0 and 1. The reasons list shows the scaled points, so they add up to the score. `avoid_explicit` is a soft nudge, not a filter. An explicit song can still rank high if it fits everything else.
 
 **Ranking rule:** sort all songs by score, highest first, and return the top K.
 
