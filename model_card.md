@@ -65,12 +65,7 @@ Prompts:
 
 Where the system struggles or behaves unfairly. 
 
-Prompts:  
-
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+**Weakness found: listeners with extreme tastes are served worse than listeners with middle-of-the-road tastes.** Because every feature is scored by closeness to the target, and most of the 18 songs sit in the middle of the energy, valence and acousticness ranges, a "mid" listener has many near matches while an "extreme" one has very few. In my "Extreme Targets" test (metal, peaceful, energy 0.0), the best score was only 0.52, and the only metal song was missing from the top 5. In contrast, the "Unknown Genre and Mood" profile with every target at 0.5 scored 0.72 at the top without matching a single label. Because the system always returns five results and never says "nothing fits", the extreme listener gets a confident-looking list that is really a poor match. This is a small filter bubble: the catalog and the scoring both favor average tastes, and mostly single-song genres (13 of 15 genres appear once) mean a genre-first listener rarely finds more than one match.
 
 ---
 
