@@ -9,7 +9,9 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from src.recommender import load_songs, recommend_songs
+import argparse
+
+from src.recommender import DEFAULT_MODE, SCORING_MODES, load_songs, recommend_songs
 
 WIDTH = 64
 
@@ -71,12 +73,12 @@ ADVANCED_PROFILES = {
 }
 
 
-def print_recommendations(name: str, user_prefs: dict, songs: list, k: int = 5) -> None:
+def print_recommendations(name: str, user_prefs: dict, songs: list, k: int = 5, mode: str = DEFAULT_MODE) -> None:
     """Print the top k recommendations for one profile in a readable layout."""
-    recommendations = recommend_songs(user_prefs, songs, k=k)
+    recommendations = recommend_songs(user_prefs, songs, k=k, mode=mode)
 
     print("\n" + "=" * WIDTH)
-    print(f"PROFILE: {name}")
+    print(f"PROFILE: {name}" + ("" if mode == DEFAULT_MODE else f"  [mode: {mode}]"))
     print(
         f"{user_prefs['genre']} / {user_prefs['mood']} | "
         f"energy {user_prefs['energy']} | valence {user_prefs['valence']} | "
@@ -94,13 +96,34 @@ def print_recommendations(name: str, user_prefs: dict, songs: list, k: int = 5) 
     print("\n" + "=" * WIDTH)
 
 
+def print_comparison(name: str, user_prefs: dict, songs: list, k: int = 3) -> None:
+    """Show the top k songs side by side for every scoring mode."""
+    print("\n" + "=" * WIDTH)
+    print(f"PROFILE: {name}  (top {k} per mode)")
+    print("=" * WIDTH)
+    for mode in SCORING_MODES:
+        picks = recommend_songs(user_prefs, songs, k=k, mode=mode)
+        line = ", ".join(f"{song['title']} ({score:.2f})" for song, score, _ in picks)
+        print(f"{mode:>15}: {line}")
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Music Recommender Simulation")
+    parser.add_argument("--mode", choices=list(SCORING_MODES), default=DEFAULT_MODE,
+                        help="scoring mode to rank songs with")
+    parser.add_argument("--compare", action="store_true",
+                        help="show the top 3 of every mode side by side instead")
+    args = parser.parse_args()
+
     songs = load_songs("data/songs.csv")
     print(f"Loaded songs: {len(songs)}")
 
     all_profiles = {**STANDARD_PROFILES, **ADVERSARIAL_PROFILES, **ADVANCED_PROFILES}
     for name, prefs in all_profiles.items():
-        print_recommendations(name, prefs, songs)
+        if args.compare:
+            print_comparison(name, prefs, songs)
+        else:
+            print_recommendations(name, prefs, songs, mode=args.mode)
 
 
 if __name__ == "__main__":

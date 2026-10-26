@@ -2,19 +2,28 @@ import csv
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
 
-# Core Algorithm Recipe weights (see README); they sum to 1.0
-NUMERIC_WEIGHTS = {"energy": 0.35, "acousticness": 0.25, "valence": 0.20}
-MOOD_WEIGHT = 0.12
-GENRE_WEIGHT = 0.08
+# Scoring modes (a simple Strategy pattern). Each mode is a table of weights, and one
+# shared scorer reads the table it is given. To add a mode, add one entry here.
+# A feature only counts when the user sets its preference, and the final score is
+# divided by the weights in use, so it always stays between 0 and 1.
+BALANCED = {
+    "energy": 0.35, "acousticness": 0.25, "valence": 0.20,  # numeric closeness
+    "mood": 0.12, "genre": 0.08,                            # exact label matches
+    "popularity": 0.10, "decade": 0.10, "mood_tags": 0.15,  # advanced features
+    "instrumentalness": 0.10, "clean": 0.05,
+}
 
-# Advanced feature weights. A feature only counts when the user sets its preference,
-# and the final score is divided by the weights in use, so it always stays in 0-1.
-POPULARITY_WEIGHT = 0.10    # pref "popularity": 0-100
-DECADE_WEIGHT = 0.10        # pref "decade": e.g. 1990
-DECADE_SPAN = 40            # a gap of 40 years or more earns nothing
-TAGS_WEIGHT = 0.15          # pref "mood_tags": list of tags
-INSTRUMENTAL_WEIGHT = 0.10  # pref "instrumentalness": 0-1
-CLEAN_WEIGHT = 0.05         # pref "avoid_explicit": True
+SCORING_MODES: Dict[str, Dict[str, float]] = {
+    "balanced": BALANCED,
+    "genre-first": {**BALANCED, "genre": 0.45, "mood": 0.10, "energy": 0.20,
+                    "acousticness": 0.15, "valence": 0.10},
+    "mood-first": {**BALANCED, "mood": 0.40, "genre": 0.10, "mood_tags": 0.25,
+                   "energy": 0.20, "acousticness": 0.15, "valence": 0.15},
+    "energy-focused": {**BALANCED, "energy": 0.60, "acousticness": 0.15, "valence": 0.10,
+                       "mood": 0.08, "genre": 0.07},
+}
+DEFAULT_MODE = "balanced"
+DECADE_SPAN = 40  # a release-decade gap of 40 years or more earns nothing
 
 
 @dataclass
@@ -86,16 +95,21 @@ def load_songs(csv_path: str) -> List[Dict]:
             songs.append(row)
     return songs
 
-def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
+def score_song(user_prefs: Dict, song: Dict, mode: str = DEFAULT_MODE) -> Tuple[float, List[str]]:
     """
-    Scores a single song against user preferences.
+    Scores a single song against user preferences, using the weights of the chosen mode.
     Required by recommend_songs() and src/main.py
     """
+    if mode not in SCORING_MODES:
+        raise ValueError(f"Unknown mode '{mode}'. Choose from: {', '.join(SCORING_MODES)}")
+    weights = SCORING_MODES[mode]
+
     # Each part is (weight, similarity from 0 to 1, reason text, show when similarity is 0)
     parts: List[Tuple[float, float, str, bool]] = []
 
     # Numeric features: closeness to the target, sim = 1 - |song - target|
-    for feature, weight in NUMERIC_WEIGHTS.items():
+    for feature in ("energy", "acousticness", "valence"):
+        weight = weights[feature]
         if feature in user_prefs:
             sim = 1.0 - abs(song[feature] - user_prefs[feature])
             label = f"{feature} close to target: {song[feature]:.2f} vs {user_prefs[feature]:.2f}"
@@ -104,37 +118,37 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     # Categorical features: exact match earns the full weight, otherwise nothing
     if "mood" in user_prefs:
         sim = 1.0 if user_prefs["mood"] == song["mood"] else 0.0
-        parts.append((MOOD_WEIGHT, sim, f"mood match: {song['mood']}", False))
+        parts.append((weights["mood"], sim, f"mood match: {song['mood']}", False))
     if "genre" in user_prefs:
         sim = 1.0 if user_prefs["genre"] == song["genre"] else 0.0
-        parts.append((GENRE_WEIGHT, sim, f"genre match: {song['genre']}", False))
+        parts.append((weights["genre"], sim, f"genre match: {song['genre']}", False))
 
     # Advanced features (only used when the user sets them)
     if "popularity" in user_prefs:
         sim = 1.0 - abs(song["popularity"] - user_prefs["popularity"]) / 100
         label = f"popularity close to target: {song['popularity']} vs {user_prefs['popularity']}"
-        parts.append((POPULARITY_WEIGHT, sim, label, True))
+        parts.append((weights["popularity"], sim, label, True))
     if "decade" in user_prefs:
         gap = abs(song["release_decade"] - user_prefs["decade"])
         sim = max(0.0, 1.0 - gap / DECADE_SPAN)
         label = f"release decade: {song['release_decade']}s vs {user_prefs['decade']}s"
-        parts.append((DECADE_WEIGHT, sim, label, True))
+        parts.append((weights["decade"], sim, label, True))
     if user_prefs.get("mood_tags"):
         wanted = user_prefs["mood_tags"]
         matched = [tag for tag in wanted if tag in song["mood_tags"]]
         sim = len(matched) / len(wanted)
-        parts.append((TAGS_WEIGHT, sim, f"mood tags match: {', '.join(matched)}", False))
+        parts.append((weights["mood_tags"], sim, f"mood tags match: {', '.join(matched)}", False))
     if "instrumentalness" in user_prefs:
         sim = 1.0 - abs(song["instrumentalness"] - user_prefs["instrumentalness"])
         label = (
             f"instrumentalness close to target: "
             f"{song['instrumentalness']:.2f} vs {user_prefs['instrumentalness']:.2f}"
         )
-        parts.append((INSTRUMENTAL_WEIGHT, sim, label, True))
+        parts.append((weights["instrumentalness"], sim, label, True))
     if user_prefs.get("avoid_explicit"):
         sim = 0.0 if song["explicit"] else 1.0
         label = "explicit lyrics" if song["explicit"] else "clean lyrics"
-        parts.append((CLEAN_WEIGHT, sim, label, True))
+        parts.append((weights["clean"], sim, label, True))
 
     # Scale by the weights in use so the score always falls between 0 and 1
     total_weight = sum(weight for weight, _, _, _ in parts)
@@ -151,7 +165,9 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
 
     return score, reasons
 
-def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tuple[Dict, float, str]]:
+def recommend_songs(
+    user_prefs: Dict, songs: List[Dict], k: int = 5, mode: str = DEFAULT_MODE
+) -> List[Tuple[Dict, float, str]]:
     """
     Functional implementation of the recommendation logic.
     Required by src/main.py
@@ -160,6 +176,6 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
     scored = (
         (song, score, "; ".join(reasons))
         for song in songs
-        for score, reasons in [score_song(user_prefs, song)]
+        for score, reasons in [score_song(user_prefs, song, mode)]
     )
     return sorted(scored, key=lambda item: item[1], reverse=True)[:k]

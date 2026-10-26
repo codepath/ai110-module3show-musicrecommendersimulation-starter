@@ -60,6 +60,54 @@ Five more attributes were added to `data/songs.csv` and to the scoring. Each one
 
 The final score is divided by the weights in use, so it always stays between 0 and 1. The reasons list shows the scaled points, so they add up to the score. `avoid_explicit` is a soft nudge, not a filter. An explicit song can still rank high if it fits everything else.
 
+**Scoring modes**
+
+The same scorer can rank with different weights. Pick a mode when you run the program:
+
+```bash
+python -m src.main                      # balanced (default)
+python -m src.main --mode genre-first
+python -m src.main --mode mood-first
+python -m src.main --mode energy-focused
+python -m src.main --compare            # top 3 of every mode side by side
+```
+
+| Mode | Biggest weights | Good for |
+|---|---|---|
+| `balanced` | energy 0.35, acousticness 0.25, valence 0.20 | the default recipe above |
+| `genre-first` | genre 0.45, energy 0.20 | listeners who only want one genre |
+| `mood-first` | mood 0.40, mood tags 0.25 | listeners who pick music by feeling |
+| `energy-focused` | energy 0.60 | workouts, studying, sleep |
+
+Output of `python -m src.main --compare` for three profiles:
+
+```
+PROFILE: High-Energy Pop  (top 3 per mode)
+       balanced: Sunrise City (0.95), Gym Hero (0.84), Rooftop Lights (0.80)
+    genre-first: Sunrise City (0.97), Gym Hero (0.88), Rooftop Lights (0.48)
+     mood-first: Sunrise City (0.97), Rooftop Lights (0.83), Gym Hero (0.57)
+ energy-focused: Sunrise City (0.94), Gym Hero (0.89), Storm Runner (0.81)
+
+PROFILE: Conflicting: Sad but Energetic  (top 3 per mode)
+       balanced: Adagio for Rain (0.71), Iron Requiem (0.51), Storm Runner (0.51)
+    genre-first: Adagio for Rain (0.83), Dust Road Home (0.29), Storm Runner (0.28)
+     mood-first: Adagio for Rain (0.83), Iron Requiem (0.32), Storm Runner (0.31)
+ energy-focused: Storm Runner (0.68), Iron Requiem (0.65), Gym Hero (0.63)
+
+PROFILE: Extreme Targets  (top 3 per mode)
+       balanced: Birchwood Lullaby (0.52), Velvet Hours (0.48), Island Sway (0.48)
+    genre-first: Iron Requiem (0.63), Birchwood Lullaby (0.32), Velvet Hours (0.27)
+     mood-first: Birchwood Lullaby (0.65), Island Sway (0.31), Velvet Hours (0.30)
+ energy-focused: Birchwood Lullaby (0.60), Adagio for Rain (0.54), Spacewalk Thoughts (0.51)
+```
+
+What the modes show:
+
+- **Mood-first fixes the *Gym Hero* problem.** For High-Energy Pop, *Gym Hero* (an "intense" song) falls from 0.84 to 0.57 and *Rooftop Lights* (a "happy" song) moves up to second.
+- **Genre-first rescues the metal fan.** For Extreme Targets, *Iron Requiem* is now first. In balanced mode it did not make the top 5.
+- **Energy-focused flips the conflicting profile.** The loud rock song wins over the sad classical one.
+- **No mode is "right".** Each one answers a different question about what the listener cares about most.
+
 **Ranking rule:** sort all songs by score, highest first, and return the top K.
 
 **Data flow plan**

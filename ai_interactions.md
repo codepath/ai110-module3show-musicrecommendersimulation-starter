@@ -49,12 +49,26 @@ Add five advanced song attributes to the dataset and make the scoring use them. 
 
 **Which design pattern did you use?**
 
-<!-- e.g., Strategy, Factory, Observer, etc. -->
+**Strategy**, in a simple data-driven form. Each scoring mode is a table of weights. One shared scorer reads whichever table it is given, so modes can be swapped without changing the scoring code.
 
 **How did AI help you brainstorm or implement it?**
 
-<!-- Describe the conversation or suggestions that led to your decision -->
+I gave the AI `recommender.py` and asked for a modular way to add several scoring modes. It suggested three options:
+
+1. **`if/elif` on the mode inside `score_song`.** Quick, but every new mode means editing the function and the code gets messy.
+2. **One scoring function per mode** (the textbook Strategy pattern). Clean, but each function would repeat the same similarity math, and a bug fix would need to be made in each one.
+3. **One shared scorer plus a weight table per mode.** The modes differ only in their weights, so only the weights need to be swapped.
+
+We picked option 3. The AI pointed out that the modes only differ in weights, so separate functions would just be copy and paste. It also suggested keeping the default mode identical to the old recipe. That let me prove nothing broke by comparing old and new output.
+
+Where I had to think for myself: the AI proposed the weights, but I checked that they made sense for each mode. I checked the results with `--compare` and with the tests.
 
 **How does the pattern appear in your final code?**
 
-<!-- Point to the relevant class or method -->
+- `SCORING_MODES` and `BALANCED` at the top of `src/recommender.py` hold the weight tables. A new mode is one new entry.
+- `score_song(user_prefs, song, mode)` looks up the table and raises `ValueError` for an unknown mode.
+- `recommend_songs(..., mode)` passes the mode through.
+- `src/main.py` has the `--mode` and `--compare` switches.
+- `tests/test_scoring_modes.py` has 9 tests. They use four tiny songs, each built to win under one mode. I also broke the code on purpose (made every mode use the balanced weights) and confirmed 3 tests failed, so the tests really do check the modes.
+
+**Branch note.** I did the work on a new branch, `experiment/scoring-modes`, so `main` stayed safe. The default `balanced` output is byte-for-byte identical to before. I have not merged the branch.
