@@ -76,6 +76,48 @@ python3 -m src.main --diverse
 
 Songs are picked one at a time. A song loses 0.75 points for each already-picked song by the same artist, and 0.25 for each in the same genre. The penalty stacks and a score never goes below 0. A penalized song shows why in its reasons. In code, pass `diversity=DEFAULT_DIVERSITY` to `recommend_songs`.
 
+### Table output
+
+For a compact view, add `--table`. Each row shows the song, its score out of the maximum, and the reasons for that score. A summary line follows. Long reasons wrap to fit your terminal.
+
+```
+python3 -m src.main --table
+python3 -m src.main --table --mode mood-first --diverse
+```
+
+Sample (`python3 -m src.main --table --profile "High-Energy Pop"` at 80 columns):
+
+```
+================================================================
+                       MUSIC RECOMMENDER                        
+================================================================
+Profile: genre=pop, mood=happy, energy=0.9
+Top 5 recommendations
+----------------------------------------------------------------
++---+-------------------+-----------+--------------------------------------+
+| # | Song              |     Score | Reasons                              |
++---+-------------------+-----------+--------------------------------------+
+| 1 | Sunrise City      | 3.84/4.00 | - genre match: pop (+1.0)            |
+|   | by Neon Echo      |           | - mood match: happy (+1.0)           |
+|   |                   |           | - energy 0.82 vs target 0.90 (+1.84) |
++---+-------------------+-----------+--------------------------------------+
+| 2 | Gym Hero          | 2.94/4.00 | - genre match: pop (+1.0)            |
+|   | by Max Pulse      |           | - energy 0.93 vs target 0.90 (+1.94) |
++---+-------------------+-----------+--------------------------------------+
+| 3 | Rooftop Lights    | 2.72/4.00 | - mood match: happy (+1.0)           |
+|   | by Indigo Parade  |           | - energy 0.76 vs target 0.90 (+1.72) |
++---+-------------------+-----------+--------------------------------------+
+| 4 | Storm Runner      | 1.98/4.00 | - energy 0.91 vs target 0.90 (+1.98) |
+|   | by Voltline       |           |                                      |
++---+-------------------+-----------+--------------------------------------+
+| 5 | Fuego en la Noche | 1.90/4.00 | - energy 0.85 vs target 0.90 (+1.90) |
+|   | by Luna Caliente  |           |                                      |
++---+-------------------+-----------+--------------------------------------+
+Summary: top pick Sunrise City (3.84/4.00) | scores 1.90 to 3.84 | 5 songs by 5 artists
+
+================================================================
+```
+
 ### How songs are chosen
 
 The `Recommender` scores every song in the catalog, sorts them from highest to lowest score, and returns the top `k` (5 by default). Each result includes a short explanation of why it was picked.

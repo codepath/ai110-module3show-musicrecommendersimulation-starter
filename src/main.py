@@ -11,6 +11,7 @@ You will implement the functions in recommender.py:
 
 import argparse
 
+from src.table import render_table
 from src.recommender import (
     DEFAULT_DIVERSITY, DEFAULT_STRATEGY, STRATEGIES, load_songs, max_score,
     recommend_songs,
@@ -25,8 +26,13 @@ def print_recommendations(
     strategy=DEFAULT_STRATEGY,
     show_mode: bool = False,
     diversity=None,
+    as_table: bool = False,
 ) -> None:
-    """Prints the ranked recommendations as a readable terminal layout."""
+    """
+    Prints the ranked recommendations. The default layout is a list per song.
+    With as_table=True it prints one table whose Reasons column explains each
+    score, followed by a one-line summary.
+    """
     print("=" * WIDTH)
     print("MUSIC RECOMMENDER".center(WIDTH))
     print("=" * WIDTH)
@@ -48,14 +54,40 @@ def print_recommendations(
     print(f"Top {len(recommendations)} recommendations")
     print("-" * WIDTH)
 
-    for rank, (song, score, explanation) in enumerate(recommendations, start=1):
-        print(f"\n#{rank}  {song['title']}  by {song['artist']}")
-        print(f"    Score: {score:.2f} / {top_score:.2f}")
-        print("    Reasons:")
-        for reason in explanation.split("; "):
-            print(f"      - {reason}")
+    if as_table:
+        print_table(recommendations, top_score)
+    else:
+        for rank, (song, score, explanation) in enumerate(recommendations, start=1):
+            print(f"\n#{rank}  {song['title']}  by {song['artist']}")
+            print(f"    Score: {score:.2f} / {top_score:.2f}")
+            print("    Reasons:")
+            for reason in explanation.split("; "):
+                print(f"      - {reason}")
 
     print("\n" + "=" * WIDTH)
+
+
+def print_table(recommendations: list, top_score: float) -> None:
+    """Prints recommendations as a table (with reasons) and a summary line."""
+    rows = [
+        (
+            str(rank),
+            f"{song['title']}\nby {song['artist']}",
+            f"{score:.2f}/{top_score:.2f}",
+            "\n".join(f"- {reason}" for reason in explanation.split("; ")),
+        )
+        for rank, (song, score, explanation) in enumerate(recommendations, start=1)
+    ]
+    print(render_table(["#", "Song", "Score", "Reasons"], rows, aligns=["r", "l", "r", "l"]))
+
+    scores = [score for _, score, _ in recommendations]
+    artists = {song["artist"] for song, _, _ in recommendations}
+    best = recommendations[0][0]["title"]
+    print(
+        f"Summary: top pick {best} ({scores[0]:.2f}/{top_score:.2f}) | "
+        f"scores {min(scores):.2f} to {max(scores):.2f} | "
+        f"{len(recommendations)} songs by {len(artists)} artists"
+    )
 
 
 # Distinct taste profiles used to compare recommender behavior
@@ -103,6 +135,11 @@ def parse_args() -> argparse.Namespace:
         help="run only profiles whose name contains this text (e.g. rock)",
     )
     parser.add_argument(
+        "--table",
+        action="store_true",
+        help="show results as a table with a Reasons column and a summary line",
+    )
+    parser.add_argument(
         "--diverse",
         action="store_true",
         help="penalize repeat artists and genres so the top 5 is more varied",
@@ -137,6 +174,7 @@ def main() -> None:
             print_recommendations(
                 user_prefs, recommendations, strategy,
                 show_mode=args.mode is not None, diversity=diversity,
+                as_table=args.table,
             )
 
 

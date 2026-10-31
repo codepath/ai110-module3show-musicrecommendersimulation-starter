@@ -186,3 +186,62 @@ Things to look at by hand:
 - **It is a nudge, not a cap.** A song that matches strongly can still survive the penalty. The Instrumental Study Session profile still returns two LoRoom songs and three lofi songs, because those songs score much higher than the rest. That may be right for someone who asked for lofi.
 - **The genre penalty can work against the user.** A listener who asks for lofi is penalized for getting several lofi songs. That is why the genre penalty (0.25) is smaller than the artist penalty (0.75).
 - **The values are guesses.** I have not tested whether 0.75 and 0.25 are the right numbers.
+
+---
+
+## Formatted Table Output
+
+> Document the prompt you wrote and what the AI did with it.
+
+**The goal**
+
+Make the terminal output easier to read. Show the top results in a table. Each row must include the reasons for the score.
+
+**Prompt used:**
+
+> Suggest a way to make the terminal output of `src/main.py` easier to read. Use a library like `tabulate`, or simple ASCII formatting. Show the top recommendations as a table.
+>
+> The table must include the "reasons" for each score. Do not drop them to make the table fit. Put the title, artist, score and reasons in the table.
+>
+> Requirements:
+> - Tell me the options and your pick before you write code.
+> - Long reasons must wrap inside the table. Fit the terminal width.
+> - Show each song's score out of its maximum. The maximum changes with the profile.
+> - Add a one-line summary under the table.
+> - Keep the current layout as the default. Add a flag for the table.
+> - Add tests. Check the table lines all have the same width.
+
+**What did the agent suggest?**
+
+| Option | Good | Not so good |
+|---|---|---|
+| `tabulate` library | One line of code. Handles multi-line cells. | It is not installed and not in `requirements.txt`. It adds a dependency. |
+| `pandas` `to_string` | `pandas` is already in `requirements.txt`. | Heavy for a simple table. Does not wrap long text. |
+| A small ASCII table function | No new dependency. I control the wrapping. | I have to write and test it. |
+
+The agent picked the ASCII function. The reasons are long, multi-line text, and wrapping them to fit the terminal is the main need. Writing it by hand keeps setup the same.
+
+**What did the agent generate or change?**
+
+- New file `src/table.py` with `render_table(headers, rows, aligns, max_width)`:
+  - Cells can have several lines.
+  - Only the Reasons column shrinks to fit the width. Its text wraps onto more lines. Wrapped bullet lines get a hanging indent.
+  - The width comes from the terminal. It falls back to 100 when output is piped.
+- `src/main.py`: a `--table` flag. The table has the columns `#`, `Song` (title and artist), `Score` (for example `3.84/4.00`) and `Reasons`. A one-line summary follows: top pick, score range and number of songs and artists.
+- `tests/test_table.py`: 5 new tests.
+- `README.md`: a short section with a sample.
+
+**What did you verify or fix manually?**
+
+Checks that were run:
+
+- **Nothing changed by default.** The output with no flags is byte-for-byte identical to before. So is the output with `--diverse --mode all`.
+- **Reasons are never dropped.** Every reason line from the list layout appears in the table. This includes the long mood-tag, popularity and decade lines, and the diversity penalty line.
+- **Fits the terminal.** With all profiles and modes, the widest table line was 80 at 80 columns and 100 at 100 columns.
+- **Tests.** All 29 tests pass: the 24 from before and 5 new ones.
+
+Things to look at by hand:
+
+- **Very narrow terminals.** Below about 66 columns the table cannot shrink further. The `Song` column does not wrap. At 60 columns the widest line was 66.
+- **Table is not the default.** I kept the list layout as the default so the sample output in the README and model card stays correct. Making the table the default is a small change, but those samples would then need regenerating.
+- **How it looks.** I checked the layout by reading the output. I should look at it in my own terminal.
