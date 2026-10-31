@@ -1,5 +1,9 @@
+import pytest
+
 from src.recommender import (
-    Song, UserProfile, Recommender, load_songs, max_score, score_song,
+    DEFAULT_STRATEGY, ENERGY_FOCUSED, GENRE_FIRST, MOOD_FIRST, STRATEGIES,
+    Song, UserProfile, Recommender, get_strategy, load_songs, max_score,
+    recommend_songs, score_song,
 )
 
 def make_small_recommender() -> Recommender:
@@ -151,3 +155,55 @@ def test_load_songs_parses_the_advanced_columns():
     assert isinstance(first["mood_tags"], list) and len(first["mood_tags"]) >= 2
     assert isinstance(first["instrumentalness"], float)
     assert all(s["language"] for s in songs)
+
+
+# ---- Ranking strategies (Genre-First, Mood-First, Energy-Focused) ----
+
+def two_songs():
+    genre_song = {"title": "Genre Match", "genre": "rock", "mood": "calm", "energy": 0.5}
+    mood_song = {"title": "Mood Match", "genre": "jazz", "mood": "intense", "energy": 0.5}
+    return [genre_song, mood_song]
+
+
+def test_every_strategy_adds_up_to_four_points():
+    assert set(STRATEGIES) == {"genre-first", "mood-first", "energy-focused"}
+    for strategy in STRATEGIES.values():
+        assert strategy.core_max == 4.0
+        assert max_score(BASE, strategy) == 4.0
+
+
+def test_default_strategy_is_energy_focused_and_scores_are_unchanged():
+    assert DEFAULT_STRATEGY is ENERGY_FOCUSED
+    song = {"genre": "pop", "mood": "happy", "energy": 0.82}
+    assert score_song(BASE, song) == score_song(BASE, song, ENERGY_FOCUSED)
+
+
+def test_switching_strategy_changes_which_song_wins():
+    prefs = {"genre": "rock", "mood": "intense", "energy": 0.5}
+    songs = two_songs()
+    assert recommend_songs(prefs, songs, 1, GENRE_FIRST)[0][0]["title"] == "Genre Match"
+    assert recommend_songs(prefs, songs, 1, MOOD_FIRST)[0][0]["title"] == "Mood Match"
+
+
+def test_strategy_changes_the_points_shown_in_the_reasons():
+    song = {"genre": "pop", "mood": "happy", "energy": 0.8}
+    _, genre_reasons = score_song(BASE, song, GENRE_FIRST)
+    _, mood_reasons = score_song(BASE, song, MOOD_FIRST)
+    assert "genre match: pop (+2.0)" in genre_reasons
+    assert "mood match: happy (+2.0)" in mood_reasons
+
+
+def test_get_strategy_accepts_loose_names_and_rejects_unknown_ones():
+    assert get_strategy(" Mood_First ") is MOOD_FIRST
+    with pytest.raises(ValueError, match="Choose from"):
+        get_strategy("vibes-only")
+
+
+def test_recommender_class_uses_the_strategy_it_is_given():
+    rock = Song(id=1, title="Rock", artist="A", genre="rock", mood="calm", energy=0.5,
+                tempo_bpm=100, valence=0.5, danceability=0.5, acousticness=0.5)
+    jazz = Song(id=2, title="Jazz", artist="B", genre="jazz", mood="intense", energy=0.5,
+                tempo_bpm=100, valence=0.5, danceability=0.5, acousticness=0.5)
+    user = UserProfile("rock", "intense", 0.5, False)
+    assert Recommender([rock, jazz], GENRE_FIRST).recommend(user, k=1)[0].title == "Rock"
+    assert Recommender([rock, jazz], MOOD_FIRST).recommend(user, k=1)[0].title == "Jazz"

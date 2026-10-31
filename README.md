@@ -47,6 +47,25 @@ Each song gets a score from 0 to 4.0 by adding up three parts:
 
 Genre and mood are weighted equally, and energy is worth the most (up to twice either label). A song with the right energy and no label matches (up to 2.0) can beat a song that matches one label but has the wrong energy. Genre alone no longer outweighs a large energy mismatch.
 
+### Ranking modes
+
+You can change how much each part of the score is worth. There are three modes. Each one adds up to 4.0.
+
+| Mode | Genre | Mood | Energy |
+|---|---|---|---|
+| `genre-first` | 2.0 | 1.0 | 1.0 |
+| `mood-first` | 1.0 | 2.0 | 1.0 |
+| `energy-focused` (default) | 1.0 | 1.0 | 2.0 |
+
+```
+python3 -m src.main                      # default mode
+python3 -m src.main --mode mood-first    # pick a mode
+python3 -m src.main --mode all           # run every mode
+python3 -m src.main --profile rock       # only profiles with "rock" in the name
+```
+
+In code, pass a strategy: `recommend_songs(prefs, songs, strategy=MOOD_FIRST)`.
+
 ### How songs are chosen
 
 The `Recommender` scores every song in the catalog, sorts them from highest to lowest score, and returns the top `k` (5 by default). Each result includes a short explanation of why it was picked.

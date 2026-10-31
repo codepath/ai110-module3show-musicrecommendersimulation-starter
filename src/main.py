@@ -9,12 +9,18 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from src.recommender import load_songs, max_score, recommend_songs
+import argparse
+
+from src.recommender import (
+    DEFAULT_STRATEGY, STRATEGIES, load_songs, max_score, recommend_songs,
+)
 
 
 WIDTH = 64
 
-def print_recommendations(user_prefs: dict, recommendations: list) -> None:
+def print_recommendations(
+    user_prefs: dict, recommendations: list, strategy=DEFAULT_STRATEGY, show_mode: bool = False
+) -> None:
     """Prints the ranked recommendations as a readable terminal layout."""
     print("=" * WIDTH)
     print("MUSIC RECOMMENDER".center(WIDTH))
@@ -26,7 +32,9 @@ def print_recommendations(user_prefs: dict, recommendations: list) -> None:
     extras = {k: v for k, v in user_prefs.items() if k not in ("genre", "mood", "energy")}
     if extras:
         print("Advanced: " + ", ".join(f"{k}={v}" for k, v in extras.items()))
-    top_score = max_score(user_prefs)
+    if show_mode:
+        print(f"Mode: {strategy.name} - {strategy.description}")
+    top_score = max_score(user_prefs, strategy)
     print(f"Top {len(recommendations)} recommendations")
     print("-" * WIDTH)
 
@@ -73,13 +81,43 @@ PROFILES = {
 }
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Music Recommender Simulation")
+    parser.add_argument(
+        "--mode",
+        choices=[*STRATEGIES, "all"],
+        help=f"ranking mode (default: {DEFAULT_STRATEGY.key}); 'all' runs every mode",
+    )
+    parser.add_argument(
+        "--profile",
+        help="run only profiles whose name contains this text (e.g. rock)",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     songs = load_songs("data/songs.csv")
 
-    for name, user_prefs in PROFILES.items():
-        print(f"\n>>> {name}")
-        recommendations = recommend_songs(user_prefs, songs, k=5)
-        print_recommendations(user_prefs, recommendations)
+    if args.mode == "all":
+        strategies = list(STRATEGIES.values())
+    else:
+        strategies = [STRATEGIES[args.mode] if args.mode else DEFAULT_STRATEGY]
+
+    profiles = {
+        name: prefs for name, prefs in PROFILES.items()
+        if not args.profile or args.profile.lower() in name.lower()
+    }
+    if not profiles:
+        raise SystemExit(f"No profile name contains '{args.profile}'.")
+
+    for name, user_prefs in profiles.items():
+        for strategy in strategies:
+            print(f"\n>>> {name}")
+            recommendations = recommend_songs(user_prefs, songs, k=5, strategy=strategy)
+            print_recommendations(
+                user_prefs, recommendations, strategy, show_mode=args.mode is not None
+            )
 
 
 if __name__ == "__main__":
