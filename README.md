@@ -56,6 +56,12 @@ pip install -r requirements.txt
 python -m src.main
 ```
 
+If running on Windows using PowerShell, use the below command instead.
+
+```powershell
+python src/main.py
+```
+
 ### Running Tests
 
 Run the starter tests with:
@@ -70,15 +76,54 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+The below is a sample command line example of the recommender's output on a Windows machine.
 
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+============================================================
+TOP RECOMMENDATIONS
+Profile: lofi | chill | energy 0.40 | likes acoustic
+============================================================
+
+1. Library Rain - Paper Lanterns
+   Score: 0.96 / 1.00
+   Why:
+     * energy 0.35 vs target 0.40 (+0.38)
+     * mood match (+0.25)
+     * genre match (+0.20)
+     * acoustic fit 0.86 (+0.13)
+------------------------------------------------------------
+
+2. Midnight Coding - LoRoom
+   Score: 0.95 / 1.00
+   Why:
+     * energy 0.42 vs target 0.40 (+0.39)
+     * mood match (+0.25)
+     * genre match (+0.20)
+     * acoustic fit 0.71 (+0.11)
+------------------------------------------------------------
+
+3. Spacewalk Thoughts - Orbit Bloom
+   Score: 0.74 / 1.00
+   Why:
+     * energy 0.28 vs target 0.40 (+0.35)
+     * mood match (+0.25)
+     * acoustic fit 0.92 (+0.14)
+------------------------------------------------------------
+
+4. Focus Flow - LoRoom
+   Score: 0.72 / 1.00
+   Why:
+     * energy 0.40 vs target 0.40 (+0.40)
+     * genre match (+0.20)
+     * acoustic fit 0.78 (+0.12)
+------------------------------------------------------------
+
+5. Porch Light Promise - Willow Creek
+   Score: 0.53 / 1.00
+   Why:
+     * energy 0.38 vs target 0.40 (+0.39)
+     * acoustic fit 0.91 (+0.14)
+------------------------------------------------------------
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->

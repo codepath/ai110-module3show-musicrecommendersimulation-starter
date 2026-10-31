@@ -13,9 +13,17 @@ Describe what your recommender is designed to do and who it is for.
 
 Prompts:  
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+- What kind of recommendations does it generate
+
+The recommender generates recommendations for the top 5 songs that match the user's taste profile. They are ranked in order of highest scores using the weights applied to the four main features: genre, mood, energy, and if accoustic music is preferred.
+
+- What assumptions does it make about the user
+
+The system assumes the users value mood more heavily than genre. Additionally, energy is heavily weighted because it is a numeric feature. The assumption is that these weight choices reflect what most users prefer.
+
+- Is this for real users or classroom exploration 
+
+This is for classroom exploration but it can be adapted for real users with some enhancements.
 
 ---
 
@@ -25,12 +33,27 @@ Explain your scoring approach in simple language.
 
 Prompts:  
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+- What features of each song are used (genre, energy, mood, etc.)
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+As stated earlier, there are four features used. These are genre, energy, mood, and whether or not accoustic music is preferred.
+
+- What user preferences are considered
+
+The user preferences that are considered are directly mapped to the four features above. They are represented by these four variables:   favorite_genre, favorite_mood, target_energy, and likes_acoustic.
+
+- How does the model turn those into a score
+
+The mode assigns four scores based on the four features as follows:
+
+-- Energy Score is 1 minus the difference between a given song's energy score and the target energy score from the user's preferences.
+-- Both Mood Match and Genre Match are equal to 1 if there is a match between the song's attributes and the user's preferences. Otherwise, they are equal to zero if there is no match.
+-- The Accoustic Score is equal to the acousticness value for a given song if the user likes acoustic songs. If they do not, then it is the difference between 1 and the song's acoustic score.
+
+After these scores are calculated, a weighted total score is derived using this formula: 0.40 * energy_score + 0.25 * mood_match + 0.20 * genre_match + 0.15 * acoustic_score. The maximum score is equal to 1 for a perfect match.
+
+- What changes did you make from the starter logic 
+
+The starter logic was not implemented at all in the codebase. There were hints about using genre, mood, and energy as features with a basic rubric where you assign +2.0 points for a genre match, +1.0 point for a mood match, and similarity points based on how close the song's energy is to the user's target. The actual implementation weighs energy higher than the others, elevates mood above genre, and adds acousticness as a consideration.
 
 ---
 
