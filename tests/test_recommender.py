@@ -1,7 +1,8 @@
 import pytest
 
 from src.recommender import (
-    DEFAULT_STRATEGY, ENERGY_FOCUSED, GENRE_FIRST, MOOD_FIRST, STRATEGIES,
+    DEFAULT_DIVERSITY, DEFAULT_STRATEGY, ENERGY_FOCUSED, GENRE_FIRST, MOOD_FIRST,
+    STRATEGIES, DiversityPenalty,
     Song, UserProfile, Recommender, get_strategy, load_songs, max_score,
     recommend_songs, score_song,
 )
@@ -207,3 +208,88 @@ def test_recommender_class_uses_the_strategy_it_is_given():
     user = UserProfile("rock", "intense", 0.5, False)
     assert Recommender([rock, jazz], GENRE_FIRST).recommend(user, k=1)[0].title == "Rock"
     assert Recommender([rock, jazz], MOOD_FIRST).recommend(user, k=1)[0].title == "Jazz"
+
+
+# ---- Diversity penalty (repeat artists and genres) ----
+
+# Target energy 0.5 with no genre/mood match, so a song's score is 2 * (1 - gap).
+DIV_PREFS = {"genre": "none", "mood": "none", "energy": 0.5}
+
+
+def div_song(title, artist, genre, energy):
+    return {"title": title, "artist": artist, "genre": genre, "mood": "x", "energy": energy}
+
+
+def titles(results):
+    return [song["title"] for song, _, _ in results]
+
+
+def test_no_penalty_means_the_plain_top_scores():
+    songs = [div_song("A1", "X", "g", 0.5), div_song("A2", "X", "g", 0.6),
+             div_song("B", "Y", "h", 0.7)]
+    assert titles(recommend_songs(DIV_PREFS, songs, 3)) == ["A1", "A2", "B"]
+
+
+def test_repeat_artist_is_pushed_below_a_different_artist():
+    songs = [div_song("A1", "X", "g", 0.5), div_song("A2", "X", "h", 0.6),
+             div_song("B", "Y", "i", 0.7)]
+    penalty = DiversityPenalty(artist_penalty=0.75, genre_penalty=0.0)
+    results = recommend_songs(DIV_PREFS, songs, 3, diversity=penalty)
+    assert titles(results) == ["A1", "B", "A2"]
+    assert any("artist X already picked 1x" in reasons for _, _, reasons in results)
+
+
+def test_repeat_genre_is_pushed_below_a_different_genre():
+    songs = [div_song("A1", "X", "g", 0.5), div_song("A2", "Y", "g", 0.6),
+             div_song("B", "Z", "h", 0.7)]
+    penalty = DiversityPenalty(artist_penalty=0.0, genre_penalty=0.25)
+    assert titles(recommend_songs(DIV_PREFS, songs, 3, diversity=penalty)) == ["A1", "B", "A2"]
+
+
+def test_penalty_stacks_for_each_earlier_pick_by_the_same_artist():
+    songs = [div_song("A1", "X", "g", 0.5), div_song("A2", "X", "g", 0.6),
+             div_song("A3", "X", "g", 0.4), div_song("C", "Z", "g", 0.75)]
+    # A2 (1.8) and A3 (1.8) both beat C (1.5) with a flat 0.2 penalty. A3 only falls
+    # behind C when the penalty stacks: 1.8 - 2 * 0.2 = 1.4.
+    penalty = DiversityPenalty(artist_penalty=0.2, genre_penalty=0.0)
+    assert titles(recommend_songs(DIV_PREFS, songs, 4, diversity=penalty)) == ["A1", "A2", "C", "A3"]
+
+
+def test_first_pick_is_never_penalized_and_scores_never_go_below_zero():
+    songs = [div_song("A1", "X", "g", 0.5), div_song("A2", "X", "g", 0.6)]
+    harsh = DiversityPenalty(artist_penalty=5.0, genre_penalty=5.0)
+    results = recommend_songs(DIV_PREFS, songs, 2, diversity=harsh)
+    assert results[0][1] == recommend_songs(DIV_PREFS, songs, 1)[0][1]
+    assert results[1][1] == 0.0
+
+
+def test_penalized_scores_stay_within_the_normal_bounds():
+    songs = load_songs("data/songs.csv")
+    prefs = {"genre": "lofi", "mood": "chill", "energy": 0.35}
+    for _, score, _ in recommend_songs(prefs, songs, 5, diversity=DEFAULT_DIVERSITY):
+        assert 0.0 <= score <= max_score(prefs)
+
+
+def test_default_penalty_gives_the_lofi_listener_a_more_varied_list():
+    songs = load_songs("data/songs.csv")
+    prefs = {"genre": "lofi", "mood": "chill", "energy": 0.35}
+    plain = recommend_songs(prefs, songs, 5)
+    varied = recommend_songs(prefs, songs, 5, diversity=DEFAULT_DIVERSITY)
+    def most_from_one_artist(results):
+        counts = {}
+        for song, _, _ in results:
+            counts[song["artist"]] = counts.get(song["artist"], 0) + 1
+        return max(counts.values())
+    assert most_from_one_artist(plain) == 2
+    assert most_from_one_artist(varied) == 1
+
+
+def test_recommender_class_applies_the_diversity_penalty():
+    def song(sid, title, artist, genre, energy):
+        return Song(id=sid, title=title, artist=artist, genre=genre, mood="x", energy=energy,
+                    tempo_bpm=100, valence=0.5, danceability=0.5, acousticness=0.5)
+    songs = [song(1, "A1", "X", "g", 0.5), song(2, "A2", "X", "h", 0.6), song(3, "B", "Y", "i", 0.7)]
+    user = UserProfile("none", "none", 0.5, False)
+    penalty = DiversityPenalty(artist_penalty=0.75, genre_penalty=0.0)
+    assert [x.title for x in Recommender(songs).recommend(user, k=3)] == ["A1", "A2", "B"]
+    assert [x.title for x in Recommender(songs, diversity=penalty).recommend(user, k=3)] == ["A1", "B", "A2"]

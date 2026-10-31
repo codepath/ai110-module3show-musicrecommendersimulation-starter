@@ -66,6 +66,16 @@ python3 -m src.main --profile rock       # only profiles with "rock" in the name
 
 In code, pass a strategy: `recommend_songs(prefs, songs, strategy=MOOD_FIRST)`.
 
+### Diversity penalty
+
+By default, the top 5 can include two songs from one artist or genre. Turn on the diversity penalty to avoid that:
+
+```
+python3 -m src.main --diverse
+```
+
+Songs are picked one at a time. A song loses 0.75 points for each already-picked song by the same artist, and 0.25 for each in the same genre. The penalty stacks and a score never goes below 0. A penalized song shows why in its reasons. In code, pass `diversity=DEFAULT_DIVERSITY` to `recommend_songs`.
+
 ### How songs are chosen
 
 The `Recommender` scores every song in the catalog, sorts them from highest to lowest score, and returns the top `k` (5 by default). Each result includes a short explanation of why it was picked.

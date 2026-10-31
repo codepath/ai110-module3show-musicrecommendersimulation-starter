@@ -132,3 +132,57 @@ Things still to check by hand:
 
 - **The modes agree more than they differ.** For most profiles, all three modes pick the same #1 song. The modes mainly change the lower ranks and the conflicting profiles. That may be right, but I should decide if it is enough variety.
 - **Merging.** The work is on `experiment/mood-first`. I have to decide whether to merge it back or drop it.
+
+---
+
+## Diversity Penalty
+
+> Document the prompt you wrote and what the AI did with it.
+
+**The rule I wanted**
+
+Stop the top results from filling up with one artist or one genre. If a song's artist (or genre) is already in the list, lower that song's score.
+
+**Prompt used:**
+
+> Add a "Diversity Penalty" to `src/recommender.py` so the top results don't repeat the same artist or genre.
+>
+> Rule: build the top-k list one song at a time. Before each pick, look at every song not yet picked. Subtract 0.75 from its score for each already-picked song by the same artist. Subtract 0.25 for each already-picked song in the same genre. The penalty stacks, so a third song by one artist loses 1.5. Never let a score drop below 0. Pick the song with the highest adjusted score. If two songs tie, keep the one that ranked higher before any penalty.
+>
+> Requirements:
+> - Make it opt-in. With no penalty, results and scores must stay exactly as they are today.
+> - Keep the penalty values in a small config object, not scattered numbers.
+> - Add a line to each penalized song's "Reasons" that says why it lost points, so scores stay explainable.
+> - Add a `--diverse` flag to `src/main.py`.
+> - Add tests for: repeat artist, repeat genre, stacking, the zero floor, ties, and the `Recommender` class.
+> - Check that scores stay between 0 and `max_score`.
+
+**What did the agent generate or change?**
+
+- `src/recommender.py`:
+  - `DiversityPenalty` is a small config class with `artist_penalty` (0.75) and `genre_penalty` (0.25). `DEFAULT_DIVERSITY` holds those defaults.
+  - `_pick_diverse` does the one-at-a-time picking. Ties go to the song that ranked higher before any penalty.
+  - `recommend_songs` and the `Recommender` class take an optional `diversity` argument. The default is `None`, which means off.
+  - A penalized song gets an extra reason, for example `diversity penalty: artist LoRoom already picked 1x, genre lofi already picked 2x (-1.25)`.
+- `src/main.py`: a `--diverse` flag. When it is on, the output shows the penalty values.
+- `tests/test_recommender.py`: 8 new tests.
+- `README.md`: a short note on the flag.
+
+**What did you verify or fix manually?**
+
+Checks that were run:
+
+- **Off by default.** With no flag, the output of all 13 profiles is byte-for-byte identical to before.
+- **It does what the rule says.** With the penalty on, 5 of the 13 profiles change. For example:
+  - Chill Lofi no longer has two LoRoom songs. Focus Flow drops out and Wildflower Road comes in.
+  - Case Mismatch no longer has two Neon Echo songs. Night Drive Loop drops out.
+  - Mainstream Hit Seeker and High-Energy Pop swap Gym Hero and Rooftop Lights, because Gym Hero shares the pop genre with #1.
+- **Bounds.** With the penalty on, no top-5 score went below 0 or above the profile's `max_score`.
+- **A test was wrong, not the code.** My first stacking test failed because I added up the scores wrong. I worked out the numbers by hand and fixed the test. The code was right. The fixed test now tells a stacking penalty apart from a flat one.
+- **Tests.** All 24 tests pass: the 16 from before and 8 new ones.
+
+Things to look at by hand:
+
+- **It is a nudge, not a cap.** A song that matches strongly can still survive the penalty. The Instrumental Study Session profile still returns two LoRoom songs and three lofi songs, because those songs score much higher than the rest. That may be right for someone who asked for lofi.
+- **The genre penalty can work against the user.** A listener who asks for lofi is penalized for getting several lofi songs. That is why the genre penalty (0.25) is smaller than the artist penalty (0.75).
+- **The values are guesses.** I have not tested whether 0.75 and 0.25 are the right numbers.

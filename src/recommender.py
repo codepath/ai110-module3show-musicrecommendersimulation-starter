@@ -1,4 +1,5 @@
 import csv
+from collections import Counter
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
@@ -37,6 +38,19 @@ ENERGY_FOCUSED = RankingStrategy(
     "Matching your energy level matters most.",
     genre_points=1.0, mood_points=1.0, energy_points=2.0,
 )
+
+@dataclass(frozen=True)
+class DiversityPenalty:
+    """
+    Lowers a song's score for every song already picked that shares its artist
+    or its genre, so the top results are not all from one artist or one genre.
+    The penalty stacks: a third song by the same artist is penalized twice.
+    """
+    artist_penalty: float = 0.75
+    genre_penalty: float = 0.25
+
+
+DEFAULT_DIVERSITY = DiversityPenalty()
 
 STRATEGIES = {
     strategy.key: strategy for strategy in (GENRE_FIRST, MOOD_FIRST, ENERGY_FOCUSED)
@@ -108,19 +122,24 @@ class Recommender:
     OOP implementation of the recommendation logic.
     Required by tests/test_recommender.py
     """
-    def __init__(self, songs: List[Song], strategy: RankingStrategy = DEFAULT_STRATEGY):
+    def __init__(
+        self,
+        songs: List[Song],
+        strategy: RankingStrategy = DEFAULT_STRATEGY,
+        diversity: Optional[DiversityPenalty] = None,
+    ):
         self.songs = songs
         self.strategy = strategy
+        self.diversity = diversity
 
     def recommend(self, user: UserProfile, k: int = 5) -> List[Song]:
         """Returns the top k songs for the user, ranked by score from highest to lowest."""
         prefs = _prefs_from_profile(user)
-        ranked = sorted(
-            self.songs,
-            key=lambda song: score_song(prefs, song.__dict__, self.strategy)[0],
-            reverse=True,
+        by_dict = {id(song.__dict__): song for song in self.songs}
+        results = recommend_songs(
+            prefs, [song.__dict__ for song in self.songs], k, self.strategy, self.diversity
         )
-        return ranked[:k]
+        return [by_dict[id(song_dict)] for song_dict, _, _ in results]
 
     def explain_recommendation(self, user: UserProfile, song: Song) -> str:
         """Returns the scoring reasons for a song as one "; "-separated string."""
@@ -283,19 +302,69 @@ def score_song(
 
     return score, reasons
 
+def _pick_diverse(
+    candidates: List[Tuple[Dict, float, List[str]]],
+    k: int,
+    diversity: DiversityPenalty,
+) -> List[Tuple[Dict, float, str]]:
+    """
+    Picks k songs one at a time. Before each pick, every remaining song loses
+    points for each already-picked song with the same artist or genre. The
+    adjusted score never drops below 0. Ties go to the song that ranked higher
+    before any penalty. Candidates must be sorted best first.
+    """
+    remaining = list(candidates)
+    picked = []
+    artists, genres = Counter(), Counter()
+
+    while remaining and len(picked) < k:
+        best = None  # (adjusted score, index, penalty note)
+        for index, (song, score, _) in enumerate(remaining):
+            artist_repeats = artists[song.get("artist")]
+            genre_repeats = genres[song.get("genre")]
+            penalty = (
+                diversity.artist_penalty * artist_repeats
+                + diversity.genre_penalty * genre_repeats
+            )
+            adjusted = max(0.0, score - penalty)
+            if best is None or adjusted > best[0]:
+                note = None
+                if penalty:
+                    parts = []
+                    if artist_repeats:
+                        parts.append(f"artist {song['artist']} already picked {artist_repeats}x")
+                    if genre_repeats:
+                        parts.append(f"genre {song['genre']} already picked {genre_repeats}x")
+                    note = f"diversity penalty: {', '.join(parts)} (-{score - adjusted:.2f})"
+                best = (adjusted, index, note)
+
+        adjusted, index, note = best
+        song, _, reasons = remaining.pop(index)
+        artists[song.get("artist")] += 1
+        genres[song.get("genre")] += 1
+        picked.append((song, adjusted, "; ".join(reasons + ([note] if note else []))))
+    return picked
+
+
 def recommend_songs(
     user_prefs: Dict,
     songs: List[Dict],
     k: int = 5,
     strategy: RankingStrategy = DEFAULT_STRATEGY,
+    diversity: Optional[DiversityPenalty] = None,
 ) -> List[Tuple[Dict, float, str]]:
     """
     Functional implementation of the recommendation logic.
     Required by src/main.py
+
+    Pass a DiversityPenalty to avoid filling the top k with one artist or genre.
+    With no penalty, the result is simply the k highest scores.
     """
     scored = []
     for song in songs:
         score, reasons = score_song(user_prefs, song, strategy)
-        scored.append((song, score, "; ".join(reasons)))
+        scored.append((song, score, reasons))
     scored.sort(key=lambda item: item[1], reverse=True)
-    return scored[:k]
+    if diversity is not None:
+        return _pick_diverse(scored, k, diversity)
+    return [(song, score, "; ".join(reasons)) for song, score, reasons in scored[:k]]

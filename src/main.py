@@ -12,14 +12,19 @@ You will implement the functions in recommender.py:
 import argparse
 
 from src.recommender import (
-    DEFAULT_STRATEGY, STRATEGIES, load_songs, max_score, recommend_songs,
+    DEFAULT_DIVERSITY, DEFAULT_STRATEGY, STRATEGIES, load_songs, max_score,
+    recommend_songs,
 )
 
 
 WIDTH = 64
 
 def print_recommendations(
-    user_prefs: dict, recommendations: list, strategy=DEFAULT_STRATEGY, show_mode: bool = False
+    user_prefs: dict,
+    recommendations: list,
+    strategy=DEFAULT_STRATEGY,
+    show_mode: bool = False,
+    diversity=None,
 ) -> None:
     """Prints the ranked recommendations as a readable terminal layout."""
     print("=" * WIDTH)
@@ -34,6 +39,11 @@ def print_recommendations(
         print("Advanced: " + ", ".join(f"{k}={v}" for k, v in extras.items()))
     if show_mode:
         print(f"Mode: {strategy.name} - {strategy.description}")
+    if diversity:
+        print(
+            f"Diversity penalty: -{diversity.artist_penalty} per repeat artist, "
+            f"-{diversity.genre_penalty} per repeat genre"
+        )
     top_score = max_score(user_prefs, strategy)
     print(f"Top {len(recommendations)} recommendations")
     print("-" * WIDTH)
@@ -92,6 +102,11 @@ def parse_args() -> argparse.Namespace:
         "--profile",
         help="run only profiles whose name contains this text (e.g. rock)",
     )
+    parser.add_argument(
+        "--diverse",
+        action="store_true",
+        help="penalize repeat artists and genres so the top 5 is more varied",
+    )
     return parser.parse_args()
 
 
@@ -104,6 +119,8 @@ def main() -> None:
     else:
         strategies = [STRATEGIES[args.mode] if args.mode else DEFAULT_STRATEGY]
 
+    diversity = DEFAULT_DIVERSITY if args.diverse else None
+
     profiles = {
         name: prefs for name, prefs in PROFILES.items()
         if not args.profile or args.profile.lower() in name.lower()
@@ -114,9 +131,12 @@ def main() -> None:
     for name, user_prefs in profiles.items():
         for strategy in strategies:
             print(f"\n>>> {name}")
-            recommendations = recommend_songs(user_prefs, songs, k=5, strategy=strategy)
+            recommendations = recommend_songs(
+                user_prefs, songs, k=5, strategy=strategy, diversity=diversity
+            )
             print_recommendations(
-                user_prefs, recommendations, strategy, show_mode=args.mode is not None
+                user_prefs, recommendations, strategy,
+                show_mode=args.mode is not None, diversity=diversity,
             )
 
 
