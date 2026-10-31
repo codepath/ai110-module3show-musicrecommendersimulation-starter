@@ -21,16 +21,27 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+Think of the recommender as a judge who gives every song in the catalog a score out of 4 points, then hands you the five highest scorers.
 
-Prompts:  
+**What the judge knows about you.** You tell it three things: your favorite genre, your favorite mood, and how energetic you want your music to be (a number from 0, very calm, to 1, very intense).
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+**What the judge looks at in each song.** Only three things: the song's genre, its mood, and its energy level. The catalog also records tempo, valence, danceability, and acousticness, but the score does not use them.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+**How the points are given.**
+
+- **Genre: 2 points.** If the song's genre is the same as your favorite, it gets 2 points. If not, it gets none.
+- **Mood: 1 point.** If the song's mood is the same as your favorite, it gets 1 point. If not, it gets none.
+- **Energy: up to 1 point.** The closer a song's energy is to the level you asked for, the more points it gets. A song that hits your target exactly gets the full point, and the score drops as the gap grows. The model does not assume more energy is better. If you ask for calm music, a loud song is penalized just like a too-quiet song would be for someone who wants intensity.
+
+Genre is worth twice as much as mood on purpose. I treated genre as the more stable sign of someone's taste, and mood as a helpful but weaker hint. Energy is worth the least, so it works mainly as a tiebreaker between songs that match the same categories.
+
+**How the list is made.** The judge scores every song one at a time, sorts them from highest to lowest, and shows the top five. Next to each song it prints the reasons behind the score, such as "genre match (+2.0)", so you can see exactly why a song was picked.
+
+**A worked example.** For someone who wants pop, happy, and energy 0.8, "Sunrise City" (pop, happy, energy 0.82) scores 3.98 out of 4: 2 for genre, 1 for mood, and 0.98 for being very close on energy. "Gym Hero" (pop, intense, energy 0.93) scores 2.87: it earns the genre points but not the mood point.
+
+**What changed from the starter logic.** The starter project only had empty placeholders for loading songs, scoring them, and ranking them. I filled these in with the recipe above and added the printed reasons and a cleaner terminal layout. I picked the point values (2, 1, and 1) myself, so they are a design choice and not a proven best answer.
+
+**Known blind spots of this approach.** Because genre and mood are all-or-nothing, a song that is "almost" the right genre, like indie pop for a pop fan, gets no credit. And because genre counts twice as much as mood, a song in your genre can outrank one that matches your mood. This is covered in more detail in the Limitations and Bias section.
 
 ---
 

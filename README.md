@@ -17,17 +17,39 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world platforms like Spotify and YouTube combine two signals. Collaborative filtering learns from the behavior of millions of users ("people like you also liked this"), and content-based filtering compares the attributes of the songs themselves. This simulation is content-based only. It has no listening history from other users, so it compares each song's attributes to one user's stated taste. It scores each song on the user's preferred **genre**, **mood**, and **energy**.
 
-Some prompts to answer:
+### Song features
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+Each `Song` stores:
 
-You can include a simple diagram or bullet list if helpful.
+- `genre` and `mood` (categories)
+- `energy`, `valence`, `danceability`, `acousticness` (0.0 to 1.0)
+- `tempo_bpm` (beats per minute)
+- `id`, `title`, `artist` (identifying info, not used for scoring)
+
+### UserProfile features
+
+Each `UserProfile` stores:
+
+- `favorite_genre`
+- `favorite_mood`
+- `target_energy` (0.0 to 1.0)
+- `likes_acoustic` (True or False)
+
+### How a song is scored
+
+Each song gets a score from 0 to 4.0 by adding up three parts:
+
+- **Genre:** +2.0 if the song's genre matches the user's favorite genre, otherwise 0.
+- **Mood:** +1.0 if the song's mood matches the user's favorite mood, otherwise 0.
+- **Energy:** up to +1.0 based on how close the song is to `target_energy`, using `1.0 * (1 - |song energy - target energy|)`. A song is not rewarded for simply having more energy.
+
+Genre is weighted twice as heavily as mood, so a genre match with the wrong mood (2.0 plus energy) beats a mood match with the wrong genre (1.0 plus energy). Energy never outweighs a category match on its own. It breaks ties between songs that match the same categories.
+
+### How songs are chosen
+
+The `Recommender` scores every song in the catalog, sorts them from highest to lowest score, and returns the top `k` (5 by default). Each result includes a short explanation of why it was picked.
 
 ---
 
@@ -68,15 +90,46 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+Running `python -m src.main` with the starter profile (genre=pop, mood=happy, energy=0.8):
 
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+================================================================
+                       MUSIC RECOMMENDER
+================================================================
+Profile: genre=pop, mood=happy, energy=0.8
+Top 5 recommendations
+----------------------------------------------------------------
+
+#1  Sunrise City  by Neon Echo
+    Score: 3.98 / 4.00
+    Reasons:
+      - genre match: pop (+2.0)
+      - mood match: happy (+1.0)
+      - energy 0.82 vs target 0.80 (+0.98)
+
+#2  Gym Hero  by Max Pulse
+    Score: 2.87 / 4.00
+    Reasons:
+      - genre match: pop (+2.0)
+      - energy 0.93 vs target 0.80 (+0.87)
+
+#3  Rooftop Lights  by Indigo Parade
+    Score: 1.96 / 4.00
+    Reasons:
+      - mood match: happy (+1.0)
+      - energy 0.76 vs target 0.80 (+0.96)
+
+#4  Concrete Crown  by Kid Meridian
+    Score: 0.98 / 4.00
+    Reasons:
+      - energy 0.78 vs target 0.80 (+0.98)
+
+#5  Fuego en la Noche  by Luna Caliente
+    Score: 0.95 / 4.00
+    Reasons:
+      - energy 0.85 vs target 0.80 (+0.95)
+
+================================================================
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->
