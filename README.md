@@ -17,17 +17,30 @@ Replace this paragraph with your own summary of what your version does.
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world platforms like Spotify and YouTube blend collaborative filtering (learning from what millions of listeners play, skip, and save) with content-based filtering (matching the audio traits of songs), then rank the candidates. My version has no listening history, so it is purely content-based. It compares each song's attributes to a user's stated taste and prioritizes how *close* a song is to what the user wants, not whether its values are high or low. Energy and mood matter most, followed by acousticness, valence, and genre.
 
-Some prompts to answer:
+**`Song` features**
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+- `genre`
+- `mood`
+- `energy`
+- `acousticness`
+- `valence`
+- `tempo_bpm` and `danceability` (stored, but given little or no weight because they overlap with energy)
 
-You can include a simple diagram or bullet list if helpful.
+**`UserProfile` features**
+
+- `favorite_genre`
+- `favorite_mood`
+- `target_energy`
+- `likes_acoustic` (maps to a high or low acousticness target)
+- `target_valence` (planned addition)
+
+**Scoring and ranking**
+
+- Each song gets a score from 0 to 1. Numeric features score `1 - |song - target|`, and genre and mood add a bonus for an exact match.
+- Weights: energy 0.30, mood 0.25, acousticness 0.20, valence 0.15, genre 0.10.
+- Songs are then sorted by score and the top K are returned.
 
 ---
 
