@@ -21,16 +21,26 @@ Prompts:
 
 ## 3. How the Model Works  
 
-Explain your scoring approach in simple language.  
+Think of the recommender as a judge at a talent show who gives every song in the catalog a scorecard. The judge knows what the listener asked for, checks each song against that request, and adds up points. Once every song has a score, the judge lines them up from highest to lowest and hands the listener the top five.
 
-Prompts:  
+**What the judge knows about each song.** Every song has a genre (like pop or lofi), a mood (like happy or chill), and four "sound" ratings from 0 to 1: how energetic it is, how positive it sounds (valence), how danceable it is, and how acoustic it is (guitars and pianos rather than electronic production).
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+**What the judge knows about the listener.** The listener gives a favorite genre, a favorite mood, how energetic, positive and danceable they want their music to be, and whether they like an acoustic sound.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+**How points are given (up to 7 in total):**
+
+- **Genre match: 2 points.** If the song's genre is exactly the listener's favorite, it gets the biggest reward. A close relative, such as "indie pop" for a pop fan, earns 1 point.
+- **Mood match: 1 point.** If the song's mood is exactly the one the listener asked for.
+- **Energy, positivity and danceability: up to 1 point each.** These reward songs that are *close* to what the listener wants, not songs with the highest values. If you ask for medium energy, a medium-energy song earns nearly a full point, while a very intense song earns less, even though it has "more" energy.
+- **Acoustic sound: up to 1 point.** Acoustic songs score well for listeners who like an acoustic sound, and electronic or produced songs score well for everyone else.
+
+**Why genre is worth more than mood.** The sound ratings already hint at mood: happy songs tend to be energetic and positive, and chill songs tend to be calm. Mood is partly counted twice, so it gets a smaller bonus. Nothing else tells the judge a song's genre, so genre gets the larger bonus.
+
+**Why the labels don't decide everything.** Genre and mood together are worth at most 3 points, while how a song sounds is worth up to 4. A song with the right label that sounds completely wrong can still be beaten by a song that sounds right.
+
+**Explaining the choice.** Every time the judge gives points, it writes down why, for example "genre match: pop (+2.0)" or "energy 0.82 vs target 0.70 (+0.88)". Each recommendation comes with this list, so the listener can see why the song was picked.
+
+**Changes from the starter logic.** The starter version had no scoring: it simply returned the first five songs in the file. I added the point system above, partial credit for related genres, the "closeness" scoring for the sound ratings, and a written reason for every point given. Tempo and artist are not used. Tempo mostly repeats what energy already measures, and in a 20-song catalog, rewarding the same artist would just repeat the same two names.
 
 ---
 
